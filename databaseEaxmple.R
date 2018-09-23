@@ -1,0 +1,12 @@
+install.packages("DBI")
+install.packages("DBI")
+library(RSQLite)
+library(DBI)
+install.packages("DBI")
+library(RSQLite)
+library(DBI)
+con <- dbConnect(RSQLite::SQLite(), dbname='d:/R/test.sqlite')
+dbListTables(con)
+sql="SELECT clinical_no_space.ajcc_pathologic_tumor_stage, gender,methy_t_2.* FROM clinical_no_space, methy_t_2 where methy_t_2.id = clinical_no_space.bcr_patient_barcode"
+data <- dbGetQuery(con, sql)
+data <- dbGetQuery(con, sql)
