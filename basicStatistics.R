@@ -103,6 +103,11 @@ x <- matrix(c(90,90,20,40), ncol = 2,byrow = T)
 x
 chisq.test(x)
 
+x <- matrix(c(85,90,25,40), ncol = 2,byrow = T)
+x
+chisq.test(x)
+
+
 
 x <- matrix(c(22,41,88,40), ncol = 2,byrow = T)
 x
@@ -126,5 +131,7 @@ t.test.mean(41.3,8.5,53,23.8,10.5,25)
 t.test.mean(21.8,10.8,53,41.3,8.5,25)
 
 t.test.mean(12.1,8.9,53,23.8,10.5,25)
+
+
 
 

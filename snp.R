@@ -61,3 +61,11 @@ x <- sortDataFrame(x, decreasing = TRUE)
 cols <- c('white','grey88','#644B39','forestgreen',
           '#FF8B00','#9867CC','#DB1C00')
 oncoprinter(x, cols, legend.panel)
+
+
+##bigmemory
+devtools::install_github("kaneplusplus/bigmemory")
+devtools::install_github("kaneplusplus/bigtabulate")
+devtools::install_github("kaneplusplus/biganalytics")
+devtools::install_github("kaneplusplus/bigalgebra")
+devtools::install_github("kaneplusplus/synchronicity")
