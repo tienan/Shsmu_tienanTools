@@ -69,3 +69,9 @@ devtools::install_github("kaneplusplus/bigtabulate")
 devtools::install_github("kaneplusplus/biganalytics")
 devtools::install_github("kaneplusplus/bigalgebra")
 devtools::install_github("kaneplusplus/synchronicity")
+
+
+
+x <- read.big.matrix("ALLtraining.txt", sep = "\t", type = "integer",
+                     shared = TRUE, col.names = c("movie", "customer", "rating",
+                                                    "year", "month"))
