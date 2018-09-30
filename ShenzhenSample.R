@@ -58,3 +58,25 @@ res = cbind(c(1:350),paste(B1,b[,1],sep = ""),paste(B2,b[,2],sep = ""),paste(B3,
 
 source("Rgenetic/basicTools.R")
 writeOutNoRowname(res,"shieryi.txt")
+
+
+
+#####################shanghai xinhua
+#T1: 试验组；T2: 对照组
+install.packages("randomizeR")
+library(randomizeR)
+
+install.packages("randomizr")
+library("randomizr")
+
+set.seed(343)
+Group <- complete_ra(N=120,num_arms = 2)
+
+Header = "Xihua"
+#generate 5 Number
+
+set.seed(343)
+a3 = sample(1:10000)
+no=paste(Header,"_",a3[1:120],"_",Z,sep = "")
+
+write.csv(file = "tableRandom.csv",x = cbind(no,Group),sep = "/t")

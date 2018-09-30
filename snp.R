@@ -36,7 +36,7 @@ devtools::install_github("kenhanscombe/ukbtools", dependencies = TRUE)
 options(unzip = "internal")
 install.packages("plotr")
 install.packages("reprex")
-devtools::install_github("lixiangchun/lxctk",args ="--no-test-load")
+devtools::install_github("tienan/lxctk",args ="--no-test-load")
 install.packages("Rcpp", dependencies=TRUE, INSTALL_opts = c('--no-lock'))
 
 devtools::install_github("lixiangchun/lxctk", dependencies = TRUE)
@@ -75,3 +75,7 @@ devtools::install_github("kaneplusplus/synchronicity")
 x <- read.big.matrix("ALLtraining.txt", sep = "\t", type = "integer",
                      shared = TRUE, col.names = c("movie", "customer", "rating",
                                                     "year", "month"))
+
+
+library(lxctk)
+library(plotr)
