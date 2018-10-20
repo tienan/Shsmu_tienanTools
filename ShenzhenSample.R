@@ -80,3 +80,7 @@ a3 = sample(1:10000)
 no=paste(Header,"_",a3[1:120],"_",Z,sep = "")
 
 write.csv(file = "tableRandom.csv",x = cbind(no,Group),sep = "/t")
+
+
+
+
