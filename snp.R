@@ -165,10 +165,10 @@ colnames(clinical_LUAD)
 
 clinical_names=c("Tumor_Sample_Barcode","FAB_classification","days_to_last_followup","Overall_Survival_Status")
 
-clinical_LUAD$bcr_patient_barcode,
+clinical_LUAD_m1 = DataFrame(clinical_LUAD$bcr_patient_barcode,
 clinical_LUAD$tumor_stage,
 clinical_LUAD$days_to_last_follow_up,
-clinical_LUAD$days_to_death
+clinical_LUAD$days_to_death)
 
 
 #https://rdrr.io/bioc/maftools/man/prepareMutSig.html
@@ -176,3 +176,48 @@ clinical_LUAD$days_to_death
 #https://github.com/raerose01/deconstructSigs
 #https://gdc.cancer.gov/access-data/gdc-data-transfer-tool  数据下载
 # https://gdc.cancer.gov/access-data/obtaining-access-controlled-data 数据获取教程
+
+#STAD
+"TCGA.THCA.varscan.aef91ada-c143-4200-a534-45f23a2c19cb.DR-10.0.somatic"
+
+laml <- read.maf(maf="TCGA.THCA.varscan.aef91ada-c143-4200-a534-45f23a2c19cb.DR-10.0.somatic.maf.gz")
+plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE,top = 100)
+
+
+
+laml@gene.summary
+laml@summary
+
+vcs = getSampleSummary(laml)
+
+vcs.m = data.table::melt(data = vcs, id = "Tumor_Sample_Barcode")
+colnames(vcs.m) = c("Tumor_Sample_Barcode", "Variant_Classification", 
+                    "N")
+
+
+dat = 
+
+
+plot.new()
+par(mar = c(4, 2.5, 0.5, 2))
+legend(x = "top", legend = names(col[levels(vcs.m$Variant_Classification)]), 
+       fill = col[levels(vcs.m$Variant_Classification)], 
+       bty = "n", ncol = 3, cex = fs)
+
+dat_result = data.frame()
+
+dat_list = read.table("TCGA_MAF_list.txt",header = F)
+for(i in 20:nrow(dat_list)){
+  laml <- read.maf(maf=as.character(dat_list[i,1]))
+  tmp_name = unlist(strsplit(as.character(dat_list[i,1]), "[.]"))
+#  tmp_name[2]
+  genes = cbind(laml@gene.summary[c(1:20),],tmp_name[2])
+  dat_result = rbind(dat_result,genes)
+}
+
+write.csv(file = "TCGA_top_20.2.csv",x = dat_result)
+
+i=19
+
+
+
