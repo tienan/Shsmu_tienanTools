@@ -220,4 +220,8 @@ write.csv(file = "TCGA_top_20.2.csv",x = dat_result)
 i=19
 
 
+#####################Express Panel 
+setwd("D:/r")
+gene_list = 
+
 

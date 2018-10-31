@@ -92,7 +92,7 @@ r1p = paste(r1,collapse = "")
 r2p = paste(r2,collapse = "")
 
 t=1
-for (i in 1:10000000){
+for (i in 1:100000){
   set.seed(i)
   Group <-  simple_ra(N=41,num_arms = 2)
   rtp = paste(Group,collapse = "")
@@ -108,24 +108,28 @@ library("randomizr")
 setwd("D:/R/")
 dat = read.table("randomCodeLiping.txt")
 r1 = dat[c(1:41),1]
-r2 = dat[c(1:67),2]
+r2 = dat[c(1:68),2]
 
 
 r1p=paste(table(r1),collapse = "")
 r2p=paste(table(r2),collapse = "")
 
 
+r1p = 2219
+r2p = 3236
+
+
 #r1p = paste(r1,collapse = "")
 #r2p = paste(r2,collapse = "")
 
 t=1
-for (i in 1:10000){
+for (i in 1:1000000){
   set.seed(i)
-  Group <-  simple_ra(N=67,num_arms = 2)
+  Group <-  simple_ra(N=68,num_arms = 2)
   table(Group)
   rtp = paste(table(Group),collapse = "")
-  print(r2p)
-  print(rtp)
+#  print(r2p)
+#  print(rtp)
   if (rtp==r2p){
     t=i
     break()
@@ -133,12 +137,30 @@ for (i in 1:10000){
 }
 
 
+
+t=1
+for (i in 1:10000){
+  set.seed(i)
+  Group <-  simple_ra(N=41,num_arms = 2)
+  table(Group)
+  rtp = paste(table(Group),collapse = "")
+  #  print(r2p)
+  #  print(rtp)
+  if (rtp==r1p){
+    t=i
+    break()
+  }
+}
+
+
+
 ####41入组的样本数
-set.seed(52)
+set.seed(18)
 Group_41 <-  simple_ra(N=182,num_arms = 2)
-table(Group_41)
+#table(Group_41)
+table(Group_41[1:41])
 ####67入组的样本数
-set.seed(1)
+set.seed(2)
 Group_67 <-  simple_ra(N=182,num_arms = 2)  
-table(Group_67)
-write.csv(file = "LipingRandom.txt",x = data.frame(Group_41,Group_67))
+table(Group_67[1:68])
+write.csv(file = "LipingRandom.csv",x = data.frame(Group_41,Group_67))
