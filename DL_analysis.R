@@ -147,6 +147,41 @@ dev.off()
 
 
 ##########################DL analysis
+source("https://bioconductor.org/biocLite.R")
+BiocManager::install("edgeR")
+install.packages("gdata")
+install.packages("heatmaply")
+install.packages("ggplot2")
+install.packages("genefilter")
+BiocManager::install("methylumi")
+
+BiocManager::install("vsn")
+BiocManager::install("preprocessCore")
+BiocManager::install("gridExtra")
+BiocManager::install("EBSeq")
+biocLite("blockmodeling")
+BiocManager::install("biomaRt")
+library()
+library("EBSeq")
+
+data(GeneMat)
+
+
+# BiocManager::install("tscvh")
+# BiocInstaller::biocLite("tscvh")
+
+library(tscvh)
+
+
+library("edgeR")
+library("gdata")
+library("heatmaply")
+library("ggplot2")
+library("genefilter")
+library("methylumi")
+
+
+
 getwd()
 setwd("D:/R/DL/")
 # read different exp gene data 
@@ -404,6 +439,7 @@ gene_name_exp_carcer = exp.hg38.values_targeted_gene[,sign == "01A"]
 
 
 ###########################dif analysis
+# Query platform Illumina HiSeq with a list of barcode 
 query <- GDCquery(project = "TCGA-LUAD", 
                   data.category = "Gene expression",
                   data.type = "Gene expression quantification",
@@ -411,9 +447,17 @@ query <- GDCquery(project = "TCGA-LUAD",
                   platform = "Illumina HiSeq",
                   file.type = "results",
                   legacy = TRUE)
+# Download a list of barcodes with platform IlluminaHiSeq_RNASeqV2
+GDCdownload(query)
 
+# Prepare expression matrix with geneID in the rows and samples (barcode) in the columns
+# rsem.genes.results as values
+LUADRnaseqSE <- GDCprepare(query)
 
+BRCAMatrix <- assay(LUADRnaseqSE ,"raw_count") # or BRCAMatrix <- assay(BRCARnaseqSE,"raw_count")
 
+# For gene expression if you need to see a boxplot correlation and AAIC plot to define outliers you can run
+LUADRnaseq_CorOutliers <- TCGAanalyze_Preprocessing(LUADRnaseqSE)
 
 
 
