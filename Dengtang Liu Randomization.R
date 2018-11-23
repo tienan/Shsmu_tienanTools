@@ -56,10 +56,12 @@ hec <- within(hec,{
 
 
 #T1: 奥痰平；T2：利培酮；T3：氨磺必利；T4：阿立哌；T5：奋乃静
-#7个中心，竞争入组
-#1600个患者
+#7个中心
+
+library("randomizr")
 ?seq
-hospital = c(rep(1,time=228),rep(2,time=228),rep(3,time=228),rep(4,time=228),rep(5,time=228),rep(6,time=228),rep(7,time=228))
+setwd("D:/R/")
+hospital = c(rep(1,time=190),rep(2,time=190),rep(3,time=190),rep(4,time=190),rep(5,time=190),rep(6,time=190),rep(7,time=190))
 
 
 set.seed(343)
@@ -70,8 +72,58 @@ Header = "SMART"
 
 set.seed(343)
 a3 = sample(1:10000,length(hospital))
-no=paste(Header,"_",a3,sep = "")
+no=paste(Header,"_","Phase1","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Hospital","Group")
+x = as.data.frame(x)
+head(x)
+table(x$Group)
 
-write.csv(file = "tableRandom.csv",x = cbind(no,hospital,Z),sep = "/t")
+write.table(file = "Dengtang_phase1_tableRandom.txt",x,sep = "\t")
+
+#Phase_II
+G =   floor(sum(as.numeric(table(x$Group)))/5*0.6+5)
+
+
+#hospital = c(rep(1,time=25),rep(2,time=25),rep(3,time=25),rep(4,time=25),rep(5,time=25),rep(6,time=25),rep(7,time=25))
+hospital =c(rep(1,time=25*7))
+
+tmp = data.frame()
+for (i in 1:5){
+  hospital =c(rep(i,time=25*7))
+  set.seed(i)
+  Z <- block_ra(blocks = hospital, num_arms = 4,prob_each = c(0.22,0.22,0.22,0.34))
+  #sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+  ?block_ra
+  table(Z,hospital)
+  a3 = sample(1:10000,length(hospital))
+  no=paste(Header,"_","Phase2","_",a3,sep = "")
+  x = cbind(no,hospital,Z)
+  colnames(x)=c("No","Group","subGroup")
+  tmp = rbind(tmp,x)
+}
+tmp$subGroup
+
+write.table(file = "Dengtang_phase2_tableRandom.txt",tmp,sep = "\t")
+
+getwd()
+
+
+hospital =c(rep(1,time=220))
+set.seed(6)
+Z <- block_ra(blocks = hospital, num_arms =2)
+#Group order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+?block_ra
+table(Z,hospital)
+a3 = sample(1:10000,length(hospital))
+no=paste(Header,"_","Phase3","_",a3,sep = "")
+x=data.frame()
+x = cbind(no,Z)
+colnames(x)=c("No","Group")
+write.table(file = "Dengtang_phase3_tableRandom.txt",x,sep = "\t")
+
+#import list 
+
+
 
 

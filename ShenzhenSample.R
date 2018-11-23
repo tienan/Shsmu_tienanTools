@@ -164,3 +164,35 @@ set.seed(2)
 Group_67 <-  simple_ra(N=182,num_arms = 2)  
 table(Group_67[1:68])
 write.csv(file = "LipingRandom.csv",x = data.frame(Group_41,Group_67))
+
+
+#甲癌测序的随机分配表
+#影响因素：不同批次、试剂差异
+
+
+
+library("randomizr")
+setwd("D:/R/")
+data(HairEyeColor)
+HairEyeColor <- data.frame(HairEyeColor)
+hec <- HairEyeColor[rep(1:nrow(HairEyeColor),
+                        times = HairEyeColor$Freq), 1:3]
+Z <- block_ra(blocks = hec$Hair)
+table(Z, hec$Hair)
+blocks <- with(hec, paste(Hair, Eye, Sex, sep = "_"))
+
+dat = read.table("THCA_random.txt",header = T,sep = "\t")
+blocks <- with(dat, paste(Batch,Kit,sep = "_"))
+
+set.seed(343)
+Z <- block_ra(blocks = blocks,num_arms = 3,prob_each = c(39/78,27/78,12/78))
+table(blocks, Z)
+Header = "THCA"
+set.seed(343)
+a3 = sample(1:10000,78)
+no=paste(Header,"_",a3,sep = "")
+write.csv(file = "THCA_tableRandom.csv",x = cbind(no,Z,dat$Batch,dat$Kit))
+
+                                           
+                                           
+                                           

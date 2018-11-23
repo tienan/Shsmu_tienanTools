@@ -144,7 +144,9 @@ dev.off()
 
 
 
-#### ################################################
+#### ################################################guofuyin - zhangjian
+library(ggplot2)
+
 setwd("D:/R/guofuyin-jianzhang/")
 dir()
 dat = read.table("dat_1.txt",header = T,sep="\t")
@@ -161,5 +163,48 @@ tiff(filename = "Figure-1.tiff",
 pheatmap(dat_for_use,clustering_distance_rows = "correlation",scale="column")
 dev.off()
 
+
+data <- read.csv("volcano_2.txt",header = T)
+data
+# 设置颜色域
+
+tiff(filename = "Figure-1B.tiff",
+     width = 2000, height = 2000, units = "px", pointsize = 12,
+     compression = "lzw",
+     bg = "white", res = 400, family = "", restoreConsole = TRUE
+)
+ggplot(data=data, 
+       aes(x=log2FC, y =log10pvalue, 
+           colour=significant,fill=significant))+
+  geom_point(alpha=1, size=3)+
+  geom_text(aes(y=log10pvalue+0.02,label=id))+
+  scale_color_manual(values=c("blue","red"))+
+  xlim(c(-3, 3)) +
+  theme_bw(base_size = 12, base_family = "Times") +
+  geom_vline(xintercept=c(-0.58,0.58),lty=4,col="grey",lwd=0.6)+
+  geom_hline(yintercept = -log10(0.05),lty=4,col="grey",lwd=0.6)+
+    theme(legend.position="right",
+        panel.grid=element_blank(),
+        legend.title = element_blank(),
+        legend.text= element_text(face="bold", color="black",family = "Times", size=15),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(face="bold", color="black", size=15),
+        axis.text.y = element_text(face="bold",  color="black", size=15),
+        axis.title.x = element_text(face="bold", color="black", size=15),
+        axis.title.y = element_text(face="bold",color="black", size=15))+
+  labs(x="log2 (fold change)",y="-log10 (p-value)",title="Volcano picture of proteomics")
+dev.off() 
+
+
+ah
+
+
+
+
+ggplot(data=data, 
+       aes(x=log2FC, y =log10pvalue, 
+           colour=significant,fill=significant))+
+  geom_point(alpha=1, size=3)+
+  geom_text(aes(y=log10pvalue+0.2,label=id))
 
 

@@ -178,15 +178,17 @@ clinical_LUAD$days_to_death)
 # https://gdc.cancer.gov/access-data/obtaining-access-controlled-data 数据获取教程
 
 #STAD
+setwd("D:/R/")
 "TCGA.THCA.varscan.aef91ada-c143-4200-a534-45f23a2c19cb.DR-10.0.somatic"
 
-laml <- read.maf(maf="TCGA.THCA.varscan.aef91ada-c143-4200-a534-45f23a2c19cb.DR-10.0.somatic.maf.gz")
+laml_LUAD <- read.maf(maf="TCGA.LUAD.varscan.acb6852e-dd48-4ca5-80f2-3d1a2c7d7ceb.DR-10.0.somatic.maf.gz")
 plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE,top = 100)
 
 
 
 laml@gene.summary
 laml@summary
+
 
 vcs = getSampleSummary(laml)
 
@@ -203,25 +205,46 @@ par(mar = c(4, 2.5, 0.5, 2))
 legend(x = "top", legend = names(col[levels(vcs.m$Variant_Classification)]), 
        fill = col[levels(vcs.m$Variant_Classification)], 
        bty = "n", ncol = 3, cex = fs)
-
+setwd("D:/R/")
 dat_result = data.frame()
-
 dat_list = read.table("TCGA_MAF_list.txt",header = F)
 for(i in 20:nrow(dat_list)){
   laml <- read.maf(maf=as.character(dat_list[i,1]))
   tmp_name = unlist(strsplit(as.character(dat_list[i,1]), "[.]"))
 #  tmp_name[2]
-  genes = cbind(laml@gene.summary[c(1:20),],tmp_name[2])
+  genes = cbind(laml@gene.summary[c(1:75),],tmp_name[2])
   dat_result = rbind(dat_result,genes)
 }
 
+dat_result75=dat_result
+dat_result50=dat_result
+dat_result$Hugo_Symbol
+
+#all cancer 100
+all_cancer_75 = intersect(tolower(dat_result75[!duplicated(dat_result75$Hugo_Symbol),]$Hugo_Symbol),
+                  tolower(diff_gene))
+
+all_cancer_50 = intersect(tolower(dat_result50[!duplicated(dat_result50$Hugo_Symbol),]$Hugo_Symbol),
+                           tolower(diff_gene))
+
+dev.off()
+oncostrip(maf =laml_LUAD, genes = toupper(all_cancer_75), fontSize = 12)
+
+oncostrip(maf =laml_LUAD)
+oncoplot(maf = laml_LUAD, top = 75, fontSize = 12)
 write.csv(file = "TCGA_top_20.2.csv",x = dat_result)
+?oncoplot
+lollipopPlot(maf = laml_LUAD, gene = 'VCAN', showMutationRate = TRUE)
 
 i=19
-
+subsetMaf(maf = laml_LUAD, 
+          genes = c('DNMT3A', 'NPM1'), 
+          query = "Variant_Classification == 'Splice_Site'", 
+          fields = 'i_transcript_name')
+?subsetMaf
 
 #####################Express Panel 
 setwd("D:/r")
-gene_list = 
+#gene_list = 
 
-
+#
