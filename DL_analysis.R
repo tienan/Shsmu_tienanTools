@@ -167,6 +167,7 @@ library("EBSeq")
 data(GeneMat)
 
 
+
 # BiocManager::install("tscvh")
 # BiocInstaller::biocLite("tscvh")
 
@@ -388,6 +389,7 @@ head(clinical_LUAD_m1 )
 # #Question: TCGA-biolink: GRCH38 RNA-seq, normalized counts matrix, Converting ensemble gene name into common gene name
 #https://support.bioconductor.org/p/101276/
 #https://gist.githubusercontent.com/tiagochst/fab346c19fa97d62a4bfb943024d1566/raw/0e7846e7b838c8c8403e4d915fc735001d8f1d06/getExp.R
+BiocManager::install("TCGAbiolinks")
 library(SummarizedExperiment)
 library(TCGAbiolinks)
 library(limma)
@@ -440,6 +442,7 @@ gene_name_exp_carcer = exp.hg38.values_targeted_gene[,sign == "01A"]
 
 ###########################dif analysis
 # Query platform Illumina HiSeq with a list of barcode 
+getwd()
 query <- GDCquery(project = "TCGA-LUAD", 
                   data.category = "Gene expression",
                   data.type = "Gene expression quantification",
@@ -454,33 +457,75 @@ GDCdownload(query)
 # rsem.genes.results as values
 LUADRnaseqSE <- GDCprepare(query)
 
-BRCAMatrix <- assay(LUADRnaseqSE ,"raw_count") # or BRCAMatrix <- assay(BRCARnaseqSE,"raw_count")
+LUADMatrix <- assay(LUADRnaseqSE ,"raw_count") # or BRCAMatrix <- assay(BRCARnaseqSE,"raw_count")
 
 # For gene expression if you need to see a boxplot correlation and AAIC plot to define outliers you can run
 LUADRnaseq_CorOutliers <- TCGAanalyze_Preprocessing(LUADRnaseqSE)
-
-
-
-
-
-
-
-
-
-
-
-sign =c()
-patient_id = colnames(exp.hg38.values)
-for (i in 1:length(colnames(exp.hg38.values))){
+library(edgeR)
+library(limma)
+patient_id = colnames(LUADMatrix )
+for (i in 1:length(patient_id)){
   tmp = (strsplit2(as.character(patient_id[i]),split = "-"))
   sign[i] = tmp[4]
   tmp = paste(tmp[1],tmp[2],tmp[3],sep = "_")
   patient_id[i] = tmp
 }
 
-gene_name_exp_dif = exp.hg38.values[,sign == "01A"|sign == "11A"]
 
-colnames(gene_name_exp_dif) = sign[sign == "01A"|sign == "11A"]
+gene_name_exp_dif = LUADMatrix[,sign == "01A"|sign == "11A"]
+
+t1 = edgeR::DGEList(gene_name_exp_dif,group = as.factor(sign[sign == "01A"|sign == "11A"]))
+t2 = edgeR::estimateCommonDisp(t1)
+t3 = edgeR::exactTest(t2)
+t3
+?edgeR::exactTest
+?TCGAanalyze_Normalization
+dataNorm <- TCGAanalyze_Normalization(tabDF = LUADMatrix, geneInfo =  geneInfo)
+# quantile filter of genes
+dataFilt <- TCGAanalyze_Filtering(tabDF = dataNorm,
+                                  method = "quantile", 
+                                  qnt.cut =  0.25)
+
+# selection of normal samples "NT"
+samplesNT <- TCGAquery_SampleTypes(barcode = colnames(dataFilt),
+                                   typesample = c("NT"))
+
+# selection of tumor samples "TP"
+samplesTP <- TCGAquery_SampleTypes(barcode = colnames(dataFilt), 
+                                   typesample = c("TP"))
+
+# Diff.expr.analysis (DEA)
+dataDEGs <- TCGAanalyze_DEA(mat1 = dataFilt[,samplesNT],
+                            mat2 = dataFilt[,samplesTP],
+                            Cond1type = "Normal",
+                            Cond2type = "Tumor",
+                            fdr.cut = 0.01 ,
+                            logFC.cut = 1,
+                            method = "glmLRT")
+
+# DEGs table with expression values in normal and tumor samples
+dataDEGsFiltLevel <- TCGAanalyze_LevelTab(dataDEGs,"Tumor","Normal",
+                                          dataFilt[,samplesTP],dataFilt[,samplesNT])
+
+
+
+
+dif_gene = tolower(dataDEGsFiltLevel$mRNA)
+
+
+target_dl_mutation = toupper(c("flnc","vcan","sh3tc1","c1s","xdh","smarca1","col12a1","ptprm",
+  "trank1","atad5","ept1","hrnr") )  
+
+library(maftools)
+?subsetMaf
+
+
+
+dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%target_dl_mutation, ]
+
+
+
+sign =c()
 
 ?ebayes
 ########## simulation & illumination
