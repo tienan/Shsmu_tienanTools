@@ -121,7 +121,7 @@ sigs.input <- mut.to.sigs.input(mut.ref  = sample.mut.ref,
                                 alt = "alt",
                                 bsg = BSgenome.Hsapiens.UCSC.hg38)
 class(sigs.input)
-
+
 sample_1 = whichSignatures(tumor.ref = sigs.input, 
                            signatures.ref = signatures.nature2013, 
                           sample.id = "TCGA.STAD.muse", 
@@ -132,7 +132,7 @@ sample_1 = whichSignatures(tumor.ref = sigs.input,
 plot_example <- whichSignatures(tumor.ref = sigs.input  ,  
                                 signatures.ref = signatures.nature2013, 
                                 sample.id = 'TCGA.STAD.muse' )
-
+
 # Plot output
 plotSignatures(sample_1 , sub = 'example')
 
@@ -178,11 +178,13 @@ clinical_LUAD$days_to_death)
 # https://gdc.cancer.gov/access-data/obtaining-access-controlled-data 数据获取教程
 
 #STAD
-setwd("D:/R/")
+getwd()
+
 "TCGA.THCA.varscan.aef91ada-c143-4200-a534-45f23a2c19cb.DR-10.0.somatic"
 
-laml_LUAD <- read.maf(maf="TCGA.LUAD.varscan.acb6852e-dd48-4ca5-80f2-3d1a2c7d7ceb.DR-10.0.somatic.maf.gz")
+laml_LUAD <- read.maf(maf="../TCGA.LUAD.varscan.acb6852e-dd48-4ca5-80f2-3d1a2c7d7ceb.DR-10.0.somatic.maf.gz")
 plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE,top = 100)
+mut_genes = subsetMaf(maf = laml)
 
 
 
