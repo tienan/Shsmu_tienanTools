@@ -1,17 +1,19 @@
 ##########################PM2.5
+library("limma")
 setwd("D:/R/pm2.5/")
 
 lipidMetabolism = read.table("lipidMetabolism.txt")
 lipidMetabolism$V1 = tolower(lipidMetabolism$V1)
 lipidMetabolism = read.table("Autophagy.txt")
 
+lipidMetabolism = c(as.character(unlist(lipidMetabolism)),"LPIN")
 
 
-
-getwd()
 
 genes_1975_pm_con = read.table("1975_gene_exp.diff",header = T,sep = "\t")
 genes_A549_pm_con = read.table("A549_gene_exp.diff",header = T,sep = "\t")
+
+genes_A549_pm_con[genes_A549_pm_con$gene%in%lipidMetabolism,]
 
 diff_H1975 = genes_1975_pm_con [genes_1975_pm_con$q_value<0.1,]
 diff_A549 = genes_A549_pm_con[genes_A549_pm_con$q_value<0.1,]
@@ -107,7 +109,7 @@ pheatmap(tmp_file_1[,c(3:8)],
          #         clustering_distance_cols = "", 
          clustering_distance_rows = "euclidean",
          cluster_rows = F,
-         scale="row",
+#         scale="row",
          fontsize_row = 15, 
          fontsize_col = 15)
 dev.off()
@@ -182,12 +184,17 @@ library("genefilter")
 library("methylumi")
 
 
-
+####################################################DL
 getwd()
-setwd("D:/R/DL/")
+setwd("../DL/")
 # read different exp gene data 
 genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
 genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
+
+
+genes_1975_dl_con[genes_1975_dl_con$gene=="SLPI",]
+
+genes_A549_dl_con [genes_1975_dl_con$gene=="VCAN",]
 
 #cutoff < 0.1 to get diff exp gene data
 diff_H1975 = genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]
@@ -239,7 +246,18 @@ for (i in 1:length(file_list)){
   merge_tmp = merge(dat_tmp,geene_name,by.x = "gene_id",by.y  = "gene_name")
   tmp_file =cbind(tmp_file,as.data.frame(merge_tmp$FPKM))
 }
+#######################################
+file_list = dir(pattern = "*.fpkm*")
+?data.frame
+tmp_file = data.frame(1)
+for (i in 1:length(file_list)){
+  dat_tmp = read.table(file_list[i],header = T,sep = "\t")
+  merge_tmp = dat_tmp[dat_tmp$gene_id=="VCAN",]
+  tmp_file =cbind(tmp_file,as.data.frame(merge_tmp$FPKM))
+}
+colnames(tmp_file) = c("No",gsub("_genes.fpkm_tracking", "", file_list))
 
+########################################
 
 ncol(tmp_file)
 
@@ -461,6 +479,7 @@ LUADMatrix <- assay(LUADRnaseqSE ,"raw_count") # or BRCAMatrix <- assay(BRCARnas
 
 # For gene expression if you need to see a boxplot correlation and AAIC plot to define outliers you can run
 LUADRnaseq_CorOutliers <- TCGAanalyze_Preprocessing(LUADRnaseqSE)
+
 library(edgeR)
 library(limma)
 patient_id = colnames(LUADMatrix )
@@ -508,7 +527,7 @@ dataDEGsFiltLevel <- TCGAanalyze_LevelTab(dataDEGs,"Tumor","Normal",
                                           dataFilt[,samplesTP],dataFilt[,samplesNT])
 
 
-
+dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA=="SLPI",]
 
 dif_gene = tolower(dataDEGsFiltLevel$mRNA)
 
@@ -519,11 +538,54 @@ target_dl_mutation = toupper(c("flnc","vcan","sh3tc1","c1s","xdh","smarca1","col
 library(maftools)
 ?subsetMaf
 
+diff_gene
+
+target_dl_deg_mut = dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%diff_gene, ]$mRNA
+
+target_dl_deg_mut[target_dl_deg_mut == "SLPI"]
 
 
-dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%target_dl_mutation, ]
+target_dl_deg_mut = dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%target_dl_mutation, ]$mRNA
 
+laml_LUAD <- read.maf(maf="../TCGA.LUAD.varscan.acb6852e-dd48-4ca5-80f2-3d1a2c7d7ceb.DR-10.0.somatic.maf.gz")
+plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE,top = 100)
+mut_genes = subsetMaf(maf = laml)
+
+mut_genes[mut_genes$Hugo_Symbol%in%target_dl_deg_mut,]$Hugo_Symbol 
+
+dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%mut_genes[mut_genes$Hugo_Symbol%in%target_dl_deg_mut,]$Hugo_Symbol ,]
+
+
+
+fold_1975 = genes_1975_dl_con[genes_1975_dl_con$gene%in%mut_genes[mut_genes$Hugo_Symbol%in%target_dl_deg_mut,]$Hugo_Symbol,]$log2.fold_change.
+fold_A549 = genes_A549_dl_con [genes_1975_dl_con$gene%in%mut_genes[mut_genes$Hugo_Symbol%in%target_dl_deg_mut,]$Hugo_Symbol,]$log2.fold_change.
+
+genes_1975_dl_con[genes_1975_dl_con$gene=="SLPI",]
+genes_A549_dl_con[genes_1975_dl_con$gene=="SLPI",]
+
+fold_1975*fold_A549>0
+
+H1975 = genes_1975_dl_con[genes_1975_dl_con$gene%in%mut_genes[mut_genes$Hugo_Symbol%in%target_dl_deg_mut,]$Hugo_Symbol,]
+
+H1975 = H1975[fold_1975*fold_A549>0,]
+#H1975$gene_id=="SLPI"
+
+H1975[H1975$log2.fold_change.*
+  dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene
+
+
+
+                                                                    
+mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold_change.*
+                                           dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene,]
+
+
+<<<<<<< HEAD
 laml_LUAD
+=======
+mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold_change.*
+                                           dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene,]
+>>>>>>> d98a0e7d3e5bc5e067c6b5f1aadb28376eda804e
 
 
 sign =c()
