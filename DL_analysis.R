@@ -1,5 +1,5 @@
 ##########################PM2.5
-setwd("D:/R/pm2.5/")
+setwd("../pm2.5/")
 
 lipidMetabolism = read.table("lipidMetabolism.txt")
 lipidMetabolism$V1 = tolower(lipidMetabolism$V1)
