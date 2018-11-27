@@ -10,6 +10,10 @@ lipidMetabolism = c(as.character(unlist(lipidMetabolism)),"LPIN")
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d98a0e7d3e5bc5e067c6b5f1aadb28376eda804e
 genes_1975_pm_con = read.table("1975_gene_exp.diff",header = T,sep = "\t")
 genes_A549_pm_con = read.table("A549_gene_exp.diff",header = T,sep = "\t")
 
@@ -581,7 +585,12 @@ mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 laml_LUAD
+=======
+mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold_change.*
+                                           dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene,]
+>>>>>>> d98a0e7d3e5bc5e067c6b5f1aadb28376eda804e
 =======
 mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold_change.*
                                            dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene,]
