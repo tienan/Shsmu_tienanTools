@@ -61,7 +61,10 @@ hec <- within(hec,{
 library("randomizr")
 ?seq
 setwd("D:/R/")
-hospital = c(rep(1,time=190),rep(2,time=190),rep(3,time=190),rep(4,time=190),rep(5,time=190),rep(6,time=190),rep(7,time=190))
+# 1310 in all
+hospital = c(rep(1,time=165),rep(2,time=165),rep(3,time=165),
+             rep(4,time=165),rep(5,time=165),rep(6,time=165),
+             rep(7,time=165),rep(8,time=165))
 
 
 set.seed(343)
@@ -81,40 +84,90 @@ table(x$Group)
 
 write.table(file = "Dengtang_phase1_tableRandom.txt",x,sep = "\t")
 
-#Phase_II
-G =   floor(sum(as.numeric(table(x$Group)))/5*0.6+5)
+#Phase_II - obey
+#G =   floor(sum(as.numeric(table(x$Group)))/5*0.6+5)
 
 
 #hospital = c(rep(1,time=25),rep(2,time=25),rep(3,time=25),rep(4,time=25),rep(5,time=25),rep(6,time=25),rep(7,time=25))
-hospital =c(rep(1,time=25*7))
+
+hospital =c(rep(1,time=550))
 
 tmp = data.frame()
-for (i in 1:5){
-  hospital =c(rep(i,time=25*7))
+for (i in 1:4){
+  hospital =c(rep(i,time=550/5))
   set.seed(i)
-  Z <- block_ra(blocks = hospital, num_arms = 4,prob_each = c(0.22,0.22,0.22,0.34))
+  Z <- block_ra(blocks = hospital, num_arms = 4,prob_each = c(1,1,1,1.6)/sum(c(1,1,1,1.6)))
   #sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
   ?block_ra
   table(Z,hospital)
+  set.seed(343+i)
   a3 = sample(1:10000,length(hospital))
   no=paste(Header,"_","Phase2","_",a3,sep = "")
   x = cbind(no,hospital,Z)
   colnames(x)=c("No","Group","subGroup")
   tmp = rbind(tmp,x)
 }
-tmp$subGroup
+hospital =c(rep(5,time=550/5))
+set.seed(5)
+Z <- block_ra(blocks = hospital, num_arms = 5,prob_each = c(1,1,1,1,1.6)/sum(c(1,1,1,1,1.6)))
+#sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+?block_ra
+set.seed(343+5)
+a3 = sample(1:10000,length(hospital))
+table(Z,hospital)
+no=paste(Header,"_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+#sugroup order: 奋乃静
+tail(tmp)
 
-write.table(file = "Dengtang_phase2_tableRandom.txt",tmp,sep = "\t")
+write.table(file = "Dengtang_phase2_tableRandom_obey.txt",tmp,sep = "\t")
 
-getwd()
+#Phase_II - Not obey
+hospital =c(rep(1,time=130))
 
-
-hospital =c(rep(1,time=220))
-set.seed(6)
-Z <- block_ra(blocks = hospital, num_arms =2)
-#Group order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+tmp = data.frame()
+for (i in 1:4){
+  hospital =c(rep(i,time=130/5))
+  set.seed(i+10)
+  Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
+  #sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 
+  ?block_ra
+  table(Z,hospital)
+  set.seed(343+10+i)
+  a3 = sample(1:10000,length(hospital))
+  no=paste(Header,"_","Phase2","_",a3,sep = "")
+  x = cbind(no,hospital,Z)
+  colnames(x)=c("No","Group","subGroup")
+  tmp = rbind(tmp,x)
+}
+hospital =c(rep(5,time=130/5))
+set.seed(5)
+Z <- block_ra(blocks = hospital, num_arms = 4,prob_each = c(1,1,1,1)/sum(c(1,1,1,1)))
+#sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
 ?block_ra
 table(Z,hospital)
+seed(343+10+5)
+a3 = sample(1:10000,length(hospital))
+no=paste(Header,"_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+#sugroup order: 奋乃静
+write.table(file = "Dengtang_phase2_tableRandom_Not_obey.txt",tmp,sep = "\t")
+
+
+
+
+#Phase_III 
+hospital =c(rep(1,time=190))
+set.seed(6)
+Z <- block_ra(blocks = hospital, num_arms =2)
+#Group order: 1. add; 2. Injection
+?block_ra
+table(Z,hospital)
+seed(343+20+1)
 a3 = sample(1:10000,length(hospital))
 no=paste(Header,"_","Phase3","_",a3,sep = "")
 x=data.frame()
