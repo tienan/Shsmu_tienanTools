@@ -1,3 +1,4 @@
+setwd("../Shsmu_tienanTools/")
 setwd("../DL/")
 # read different exp gene data 
 genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")

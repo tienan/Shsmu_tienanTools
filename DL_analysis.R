@@ -1,16 +1,27 @@
 ##########################PM2.5
+<<<<<<< HEAD
 setwd("../pm2.5/")
+=======
+library("limma")
+setwd("D:/R/pm2.5/")
+>>>>>>> ffb67f991571f503b06742b37b2530d36e21bb61
 
 lipidMetabolism = read.table("lipidMetabolism.txt")
 lipidMetabolism$V1 = tolower(lipidMetabolism$V1)
 lipidMetabolism = read.table("Autophagy.txt")
 
+lipidMetabolism = c(as.character(unlist(lipidMetabolism)),"LPIN")
 
 
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> d98a0e7d3e5bc5e067c6b5f1aadb28376eda804e
 genes_1975_pm_con = read.table("1975_gene_exp.diff",header = T,sep = "\t")
 genes_A549_pm_con = read.table("A549_gene_exp.diff",header = T,sep = "\t")
+
+genes_A549_pm_con[genes_A549_pm_con$gene%in%lipidMetabolism,]
 
 diff_H1975 = genes_1975_pm_con [genes_1975_pm_con$q_value<0.1,]
 diff_A549 = genes_A549_pm_con[genes_A549_pm_con$q_value<0.1,]
@@ -106,7 +117,7 @@ pheatmap(tmp_file_1[,c(3:8)],
          #         clustering_distance_cols = "", 
          clustering_distance_rows = "euclidean",
          cluster_rows = F,
-         scale="row",
+#         scale="row",
          fontsize_row = 15, 
          fontsize_col = 15)
 dev.off()
@@ -577,8 +588,17 @@ mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold
                                            dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene,]
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+laml_LUAD
+=======
 mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold_change.*
                                            dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene,]
+>>>>>>> d98a0e7d3e5bc5e067c6b5f1aadb28376eda804e
+=======
+mut_genes[mut_genes$Hugo_Symbol%in%H1975[H1975[fold_1975*fold_A549>0,]$log2.fold_change.*
+                                           dataDEGsFiltLevel[dataDEGsFiltLevel$mRNA%in%H1975$gene,]$logFC<0,]$gene,]
+>>>>>>> d98a0e7d3e5bc5e067c6b5f1aadb28376eda804e
 
 
 sign =c()
