@@ -897,3 +897,39 @@ clin.gbm <- GDCquery_clinic("TCGA-LUAD", "clinical")
 TCGAanalyze_survival(clinical_LUAD ,
                      "gender",
                      main = "TCGA Set\n GBM",height = 10, width=10)
+
+
+######################survival analysis
+
+CancerProject <- "TCGA-LUAD"
+DataDirectory <- paste0("../GDC/",gsub("-","_",CancerProject))
+FileNameData <- paste0(DataDirectory, "_","HTSeq_Counts",".rda")
+query <- GDCquery(project = CancerProject,
+                  data.category = "Transcriptome Profiling",
+                  data.type = "Gene Expression Quantification", 
+                  workflow.type = "HTSeq - Counts")
+samplesDown <- getResults(query,cols=c("cases"))
+
+dataSmTP <- TCGAquery_SampleTypes(barcode = samplesDown,
+                                  typesample = "TP")
+
+dataSmNT <- TCGAquery_SampleTypes(barcode = samplesDown,
+                                  typesample = "NT")
+dataSmTP_short <- dataSmTP[1:10]
+dataSmNT_short <- dataSmNT[1:10]
+
+queryDown <- query
+
+GDCdownload(query = queryDown,
+            directory = DataDirectory)
+
+
+
+
+clin.gbm <- GDCquery_clinic("TCGA-GBM", "clinical")
+TCGAanalyze_survival(clin.gbm,
+                     "gender",
+                     main = "TCGA Set\n GBM",height = 10, width=10)
+
+
+
