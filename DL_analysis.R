@@ -237,7 +237,7 @@ diff_gene_fold = cbind(as.character(genes_1975_dl_con[(genes_1975_dl_con$gene)%i
 diff_gene_filer_1 = diff_gene_fold[as.numeric(diff_gene_fold[,3])*as.numeric(diff_gene_fold[,4])>0,]
 
 # gene name order
-gene_name = as.data.frame(sort(tolower(diff_gene)))
+gene_name = as.data.frame(sort(tolower(diff_gene_filer_1[,1])))
 colnames(gene_name)="gene_name"
 
 #sort(gene_name)
