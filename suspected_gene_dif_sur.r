@@ -1,5 +1,6 @@
 #################################DL dif gene###########################################
-setwd("../DL/")
+getwd()
+setwd("D:/R/DL/")
 # read different exp gene data 
 genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
 genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
@@ -47,7 +48,7 @@ GDCdownload(query)
 # Prepare expression matrix with geneID in the rows and samples (barcode) in the columns
 # rsem.genes.results as values
 LUADRnaseqSE <- GDCprepare(query)
-
+library(SummarizedExperiment)
 LUADMatrix <- assay(LUADRnaseqSE ,"raw_count") # or BRCAMatrix <- assay(BRCARnaseqSE,"raw_count")
 ###############
 # For gene expression if you need to see a boxplot correlation and AAIC plot to define outliers you can run
@@ -104,13 +105,33 @@ library(TCGAbiolinks)
 # Survival Analysis SA
 tabSurvKMcomplete <- NULL
 clinical_patient_Cancer <- GDCquery_clinic("TCGA-LUAD","clinical")
+
 LUAD_rnaseqv2 <- LUADMatrix
 dataNorm <- TCGAanalyze_Normalization(tabDF = LUAD_rnaseqv2, geneInfo =  geneInfo)
-dataLUADcomplete <- log2(dataNorm)
-tabSurvKM<-TCGAanalyze_SurvivalKM(clinical_patient_Cancer,dataLUADcomplete,
-                                  Genelist = rownames(dataLUADcomplete),Survresult = F,
-                                  ThreshTop=0.5,
-                                  ThreshDown=0.5)
+dataLUADcomplete <- dataNorm
+
+tokenStop<- 1
+
+tabSurvKMcomplete <- NULL
+
+#for( i in 1: round(nrow(dataLUADcomplete)/100)){
+#  tokenStart <- tokenStop
+#  tokenStop <-100*i
+  tabSurvKM<-
+    TCGAanalyze_SurvivalKM(clinical_patient_Cancer,dataLUADcomplete,
+                                    Genelist = rownames(dataLUADcomplete),
+                                    Survresult = F,
+                                    ThreshTop=0.5,
+                                    ThreshDown=0.5)
+#  tabSurvKMcomplete <- rbind(tabSurvKMcomplete,tabSurvKM)
+#}
+abSurvKMcomplete = tabSurvKM
+tabSurvKMcomplete <- tabSurvKMcomplete[tabSurvKMcomplete$pvalue < 0.05,]
+tabSurvKMcomplete <- tabSurvKMcomplete[order(tabSurvKMcomplete$pvalue, decreasing=F),]
+  
+write.csv(tabSurvKMcomplete,file = "LUADsur.csv")
+
+
 
 tmp_id = rownames(tabSurvKM) 
 tmp=NULL
@@ -124,7 +145,10 @@ rownames(tabSurvKM) = tmp_name
 
 
 # the intersection with dif gene 
-intersect(rownames(tabSurvKM),dataDEGsFiltLevel$mRNA)
+tabSurvKMcompleteDEGs <- tabSurvKMcomplete[
+  rownames(tabSurvKMcomplete) %in% dataDEGsFiltLevel$mRNA,
+  ]
+write.csv(tabSurvKMcompleteDEGs,file = "tabSurvKMcompleteDEGsLUAD.csv")
 
 
 

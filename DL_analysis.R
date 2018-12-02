@@ -666,7 +666,7 @@ min(gene_name_exp_carcer)
 
 #tmp_file
 
-#DL statue simulation 
+#DL statue simulation #######################################################
 DL_state = apply(tmp_file[,c(5:7,11:13)],1,mean)
 normal_state = apply(tmp_file[,c(2:4,8:10)],1,mean)
 diff_DL_nor = DL_state - normal_state 
