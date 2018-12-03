@@ -129,6 +129,23 @@ dl_cancer_gene = merge_data[merge_data$logFC*
 nrow(dl_cancer_gene)
 
 dl_cancer_gene$mRNA
+
+
+#A549 LOC 有差异  Pdia3p1
+#H1975  LOC441666 diff  LOC low exp & non-invasion dataset no sig diff
+#loc 46, 52 
+###################################fig.1 
+source("https://bioconductor.org/biocLite.R")
+BiocManager::install("ggplot2")
+library(ggplot2)
+###
+set.seed(1234)
+dat <- data.frame(cond = factor(rep(c("A","B"), each=200)), 
+                  rating = c(rnorm(200),rnorm(200, mean=.8)))
+# View first few rows
+ggplot(dat, aes(x=rating, fill=cond)) + geom_density(alpha=.3)
+
+###################### map diff IDs 
 BiocManager::install("gage")
 BiocManager::install("pathview")
 library(gage)
@@ -151,6 +168,24 @@ geneannot.map(in.ids = as.character(dl_cancer_gene$mRNA) ,
               in.type = gene.idtype.list[1],out.type = gene.idtype.list[9],
               org="Hs", pkg.name=NULL,
               unique.map=TRUE, na.rm=TRUE, keep.order=TRUE)
-#loc 46, 52
+
+###################################tpm DL 
+setwd("D:/R/DL/")
+tpm_data = read.csv("salmon_exp_1st_seq.csv")
+head(tpm_data)
+diff_gene_filer_1_intersection#0.1,intersect, 
+
+DL_genes = tpm_data[tpm_data$GeneName%in%diff_gene_filer_1_intersection[,1],c(1:8)]
+rownames(DL_genes) = DL_genes[,2]
 
 
+library(pheatmap)
+
+pheatmap(DL_genes[,c(3:8)],
+         # clustering_distance_cols = "", 
+         clustering_distance_rows = "euclidean",
+         cluster_rows = F,
+         scale="row",
+         fontsize_row = 15, 
+         fontsize_col = 15)
+DL_genes[,c(3:8)]

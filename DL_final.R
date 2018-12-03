@@ -164,7 +164,7 @@ write.csv(x = mut_genes[mut_genes$Hugo_Symbol%in%dl_union_cancer$mRNA,c(1:20)]
 
 ##### DL condition ###################################################################
 # intersect
-setwd("../DL/")
+setwd("D:/R/DL/")
 
 # read different exp gene data 
 genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
@@ -189,6 +189,7 @@ file_list = dir(pattern = "*.fpkm*")
 
 #extract the data of target gene
 ?data.frame
+tmp_file=c()
 tmp_file = data.frame(1:23)
 for (i in 1:length(file_list)){
   dat_tmp = read.table(file_list[i],header = T,sep = "\t")
@@ -196,6 +197,8 @@ for (i in 1:length(file_list)){
   merge_tmp = merge(dat_tmp,gene_name,by.x = "gene_id",by.y  = "gene_name")
   tmp_file =cbind(tmp_file,as.data.frame(merge_tmp$FPKM))
 }
+tmp_file$gene_id = merge_tmp$gene_id
+colnames(tmp_file)=c("id",file_list,"gene_id")
 # data of TCGA 
 library("limma")
 ####TCGA RNA data 
@@ -203,7 +206,7 @@ library("limma")
 library("devtools")
 #devtools::install_github(repo = "BioinformaticsFMRP/TCGAbiolinks")
 library("TCGAbiolinks")
-BiocManager::install("TCGAbiolinks")
+#BiocManager::install("TCGAbiolinks")
 library(SummarizedExperiment)
 library(TCGAbiolinks)
 library(limma)
@@ -215,8 +218,9 @@ query.exp.hg38 <- GDCquery(project = "TCGA-LUAD",
                            workflow.type = "HTSeq - FPKM")
 LUADRnaseqSE <- GDCprepare(query.exp.hg38)
 #GDCdownload(query.exp.hg38,files.per.chunk = 1)
-exp.hg38.values <- assay(LUADRnaseqSE )
-rownames(LUADRnaseqSE ) <- values(LUADRnaseqSE)$external_gene_name
+
+rownames(LUADRnaseqSE) <- values(LUADRnaseqSE)$external_gene_name
+exp.hg38.values <- assay(LUADRnaseqSE)
 #write.csv(exp.hg38.values,file = "stad_exp_hg38_FPKM.csv")
 # extract the targeted gene
 rownames(exp.hg38.values) = tolower(rownames(exp.hg38.values))
@@ -226,12 +230,12 @@ exp.hg38.values_targeted_gene = exp.hg38.values[rownames(exp.hg38.values)%in%gen
 sign =c()
 patient_id = colnames(exp.hg38.values)
 for (i in 1:length(colnames(exp.hg38.values))){
-  tmp = (strsplit2(as.character(patient_id[i]),split = "_"))
+  tmp = (strsplit2(as.character(patient_id[i]),split = "-"))
   sign[i] = tmp[4]
   tmp = paste(tmp[1],tmp[2],tmp[3],sep = "_")
   patient_id[i] = tmp
 }
-colnames(exp.hg38.values) = patient_id
+colnames(exp.hg38.values_targeted_gene) = patient_id
 
 #gene_name_exp = exp.hg38.values[rownames(exp.hg38.values)%in%gene_name$gene_name,]
 #rownames(gene_name_exp)
@@ -239,18 +243,19 @@ gene_name_exp_carcer = exp.hg38.values_targeted_gene[,sign == "01A"]
 ##################DL condition 
 DL_state = apply(tmp_file[,c(5:7,11:13)],1,mean)
 normal_state = apply(tmp_file[,c(2:4,8:10)],1,mean)
-diff_DL_nor = DL_state - normal_state 
+diff_DL_nor =as.data.frame(DL_state - normal_state)
+rownames(diff_DL_nor)=tmp_file$gene_id
 
 #1. DL increase; 0. DL decease
 
 DL_sign = c()
 DL_sign = ifelse(diff_DL_nor<0,0,1)
-DL_sign_sort = DL_sign[order(names(DL_sign ))]
+DL_sign_sort = DL_sign[order(rownames(DL_sign))]
 gene_name_exp_carcer_sort = 
   gene_name_exp_carcer[order(rownames(gene_name_exp_carcer)),]
 rownames(gene_name_exp_carcer_sort)
-names(DL_sign_sort)
-?ifelse
+
+#?ifelse
 # DL statue simulation calculation  >75%  <25%  model 1 
 gene_name_exp_carcer_sign=gene_name_exp_carcer_sort
 for (i in 1:length(DL_sign_sort)){
@@ -276,7 +281,7 @@ table(gene_name_exp_carcer_sign_sum)
 names = names(gene_name_exp_carcer_sign_sum)
 name = c()
 for (i in 1:length(gene_name_exp_carcer_sign_sum)){
-  tmp = unlist(strsplit(names[i],split = "-"))
+  tmp = unlist(strsplit(names[i],split = "_"))
   name[i]=paste(tmp[1],tmp[2],tmp[3],sep = "-")
 }
 DL_statu = as.data.frame(cbind(name,gene_name_exp_carcer_sign_sum))
@@ -287,7 +292,7 @@ colnames(clinical_LUAD)
 #临床数据整理
 clinical_names=c("Tumor_Sample_Barcode","FAB_classification","days_to_last_followup","Overall_Survival_Status")
 
-clinical_LUAD_m1 = DataFrame(clinical_LUAD$submitter_id,
+clinical_LUAD_m1 = data.frame(clinical_LUAD$submitter_id,
                              clinical_LUAD$tumor_stage,
                              clinical_LUAD$days_to_last_follow_up,
                              clinical_LUAD$days_to_death)
@@ -307,18 +312,15 @@ clinical_LUAD_m1$survial_state = survial_state
 #head(clinical_LUAD_m1)
 #DL statu & clinical data merge 
 DL_statu$name
-clinical_LUAD_m1$clinical_LUAD.bcr_patient_barcode
-clin_DL = merge(DL_statu,clinical_LUAD_m1,by.x = "name",by.y="clinical_LUAD.bcr_patient_barcode")
+clinical_LUAD_m1$clinical_LUAD.submitter_id
+clin_DL = merge(DL_statu,clinical_LUAD_m1,by.x = "name",by.y="clinical_LUAD.submitter_id")
 #head(clin_DL)
 #cbind(clin_DL$DL_level,clin_DL$survial_day,clin_DL$clinical_LUAD.tumor_stage)
 
 plot(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum),clin_DL$survial_day)
-
+##########cancer stage modify 
 stage = as.character(clin_DL$clinical_LUAD.tumor_stage)
 stage_simple = c()
-
-
-##########cancer stage modify 
 ?grepl
 for(i in 1:length(stage)){
   if(grepl('[i,ii][a,b]', stage[i]))
@@ -326,8 +328,6 @@ for(i in 1:length(stage)){
   else
   {stage_simple[i]=2}
 }
-
-
 clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>10,1,0)
 
 boxplot(clin_DL$survial_day~clin_DL$group)
@@ -335,8 +335,16 @@ boxplot(clin_DL$survial_day~clin_DL$group)
 t.test(clin_DL$survial_day~clin_DL$group)
 
 library(survival)
+library(ggplot2)
+require("survival")
+library(survminer)
 ?survdiff
+??survival
 survival::survdiff(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL)
-
+fit <- coxph(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL) 
+fit<- survfit(Surv(survial_day, survial_state)~group+stage_simple, data=clin_DL)
+ggsurvplot(fit, data = clin_DL)
+summary(fit)
+??ggsurvplot
 
 
