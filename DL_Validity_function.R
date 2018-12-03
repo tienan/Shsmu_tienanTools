@@ -184,7 +184,7 @@ DL_Vadility <- function(CancerName) {
   surR = survival::survdiff(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL)
 #  fit <- coxph(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL) 
   fit<- survfit(Surv(survial_day, survial_state)~group+stage_simple, data=clin_DL)
-  tiff(filename = paste(CancerName,".tif"),
+  tiff(filename = paste(CancerName,".tif",sep = ""),
        width = 2480, height = 2480, units = "px", pointsize = 12,
        compression = "lzw", 
        bg = "white", res = 300
@@ -192,5 +192,5 @@ DL_Vadility <- function(CancerName) {
   ggsurvplot(fit, data = clin_DL)
   dev.off()
 # summary(fit)
-  return(1-pchisq(surR$chisq,3))
+  return(1-pchisq(surR$chisq,1))
 }

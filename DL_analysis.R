@@ -933,13 +933,33 @@ TCGAanalyze_survival(clin.gbm,
 
 #############################batch cal ####################################
 getwd()
+setwd("../DL/")
 source("~/R/Shsmu_tienanTools/DL_Validity_function.R")
-TCGAName = read.csv("../Shsmu_tienanTools/TCGA-Name.txt",header = F)
+TCGAName = read.csv("../DL/TCGA-Cancer_1.txt",header = F)
 p = NULL
+res = list()
+
 for (i in 1:nrow(TCGAName)){
-  tmp = gsub(" ","",as.character(TCGAName[i,1]))
-  p[i] = DL_Vadility(tmp)
+  CancerName = gsub(" ","",as.character(TCGAName[i,1]))
+  source("Process.R")
+  #scan()
+  fit<- survfit(Surv(survial_day, survial_state)~group+stage_simple, data=clin_DL)
+   tiff(filename = paste(CancerName,".tif",sep = ""),
+       width = 3480, height = 2480, units = "px", pointsize = 12,
+       compression = "lzw", 
+       bg = "white", res = 300
+       )
+  ggsurvplot(fit, data = clin_DL)
+  dev.off()
+  h = ggsurvplot(fit, data = clin_DL)
+  res[i] = h
 }
 
-CancerName  = gsub(" ","",as.character(TCGAName[1,1]))
-DL_Vadility(CancerName)
+CancerName = "TCGA-LUAD"
+
+
+clin_DL
+clin.gbm <- GDCquery_clinic("TCGA-GBM", "clinical")
+TCGAanalyze_survival(clin_DL,
+                     "gender",
+                     main = "TCGA Set\n GBM",height = 10, width=10)
