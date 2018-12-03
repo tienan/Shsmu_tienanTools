@@ -191,7 +191,7 @@ library("devtools")
 #devtools::install_github(repo = "BioinformaticsFMRP/TCGAbiolinks")
 library("TCGAbiolinks")
 
-BiocManager::install("TCGAbiolinks")
+#BiocManager::install("TCGAbiolinks")
 library(SummarizedExperiment)
 library(TCGAbiolinks)
 library(limma)
