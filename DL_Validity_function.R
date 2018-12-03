@@ -180,10 +180,11 @@ DL_Vadility <- function(CancerName) {
   library(ggplot2)
   require("survival")
   library(survminer)
-  survival::survdiff(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL)
+  surR = survival::survdiff(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL)
 #  fit <- coxph(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL) 
   fit<- survfit(Surv(survial_day, survial_state)~group+stage_simple, data=clin_DL)
-  ggsurvplot(fit, data = clin_DL)
+  ?tiff()
+  ggsurvplot(fit, data = clin_DL,)
 #  summary(fit)
   
 }
