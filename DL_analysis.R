@@ -931,5 +931,15 @@ TCGAanalyze_survival(clin.gbm,
                      "gender",
                      main = "TCGA Set\n GBM",height = 10, width=10)
 
+#############################batch cal ####################################
+getwd()
+source("~/R/Shsmu_tienanTools/DL_Validity_function.R")
+TCGAName = read.csv("../Shsmu_tienanTools/TCGA-Name.txt",header = F)
+p = NULL
+for (i in 1:nrow(TCGAName)){
+  tmp = gsub(" ","",as.character(TCGAName[i,1]))
+  p[i] = DL_Vadility(tmp)
+}
 
-
+CancerName  = gsub(" ","",as.character(TCGAName[1,1]))
+DL_Vadility(CancerName)

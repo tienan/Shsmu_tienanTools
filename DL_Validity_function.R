@@ -2,7 +2,7 @@ DL_Vadility <- function(CancerName) {
   print("read DL genes")
 ###################################
   # intersect
-  setwd("D:/R/DL/")
+  setwd("../DL/")
   
   # read different exp gene data 
   genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
@@ -56,6 +56,7 @@ DL_Vadility <- function(CancerName) {
                              data.category = "Transcriptome Profiling", 
                              data.type = "Gene Expression Quantification", 
                              workflow.type = "HTSeq - FPKM")
+  GDCdownload(query.exp.hg38)
   LUADRnaseqSE <- GDCprepare(query.exp.hg38)
   #GDCdownload(query.exp.hg38,files.per.chunk = 1)
   
@@ -127,7 +128,7 @@ DL_Vadility <- function(CancerName) {
   }
   DL_statu = as.data.frame(cbind(name,gene_name_exp_carcer_sign_sum))
   
-  clinical_LUAD <- GDCquery_clinic(project = "CancerName", type = "clinical")
+  clinical_LUAD <- GDCquery_clinic(project = CancerName, type = "clinical")
   colnames(clinical_LUAD)
   #clinical_LUAD$
   #临床数据整理
@@ -159,22 +160,22 @@ DL_Vadility <- function(CancerName) {
   #head(clin_DL)
   #cbind(clin_DL$DL_level,clin_DL$survial_day,clin_DL$clinical_LUAD.tumor_stage)
   
-  plot(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum),clin_DL$survial_day)
+  #plot(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum),clin_DL$survial_day)
   ##########cancer stage modify 
   stage = as.character(clin_DL$clinical_LUAD.tumor_stage)
   stage_simple = c()
   ?grepl
   for(i in 1:length(stage)){
-    if(grepl('[i,ii][a,b]', stage[i]))
-    {stage_simple[i]=1}
-    else
+    if(grepl('iii|iv', stage[i]))
     {stage_simple[i]=2}
+    else
+    {stage_simple[i]=1}
   }
   clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>10,1,0)
   
-  boxplot(clin_DL$survial_day~clin_DL$group)
+  #boxplot(clin_DL$survial_day~clin_DL$group)
   
-  t.test(clin_DL$survial_day~clin_DL$group)
+  print(t.test(clin_DL$survial_day~clin_DL$group))
   
   library(survival)
   library(ggplot2)
@@ -183,8 +184,13 @@ DL_Vadility <- function(CancerName) {
   surR = survival::survdiff(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL)
 #  fit <- coxph(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL) 
   fit<- survfit(Surv(survial_day, survial_state)~group+stage_simple, data=clin_DL)
-  ?tiff()
-  ggsurvplot(fit, data = clin_DL,)
-#  summary(fit)
-  
+  tiff(filename = paste(CancerName,".tif"),
+       width = 2480, height = 2480, units = "px", pointsize = 12,
+       compression = "lzw", 
+       bg = "white", res = 300
+       )
+  ggsurvplot(fit, data = clin_DL)
+  dev.off()
+# summary(fit)
+  return(1-pchisq(surR$chisq,3))
 }
