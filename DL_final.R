@@ -23,6 +23,8 @@ diff_gene_fold = cbind(as.character(genes_1975_dl_con[(genes_1975_dl_con$gene)%i
 # extract the data with the same direction 
 diff_gene_filer_1 = diff_gene_fold[as.numeric(diff_gene_fold[,3])*as.numeric(diff_gene_fold[,5])>0,]
 
+
+
 # gene name order
 gene_name = as.data.frame(sort(tolower(diff_gene)))
 colnames(diff_gene_filer_1 )=c("gene_name","gene_id","H1975_foldChange","p-value","A549_foldChange","p-value")
@@ -299,6 +301,7 @@ clinical_names=c("Tumor_Sample_Barcode","FAB_classification","days_to_last_follo
 clinical_LUAD_m1 = data.frame(clinical_LUAD$submitter_id,
                              clinical_LUAD$tumor_stage,
                              clinical_LUAD$days_to_last_follow_up,
+                             clinical_LUAD$age_at_diagnosis,
                              clinical_LUAD$days_to_death)
 
 survial_day=c()
@@ -351,4 +354,15 @@ ggsurvplot(fit, data = clin_DL)
 summary(fit)
 ??ggsurvplot
 
+####################################################################
+file_list = dir(pattern = "*.fpkm*")
 
+#extract the data of target gene
+?data.frame
+tmp_file = NULL
+dat_tmp = read.table(file_list[i],header = T,sep = "\t")
+tmp_file =  as.data.frame(dat_tmp$FPKM)
+for (i in 2:length(file_list)){
+  dat_tmp = read.table(file_list[i],header = T,sep = "\t")
+  tmp_file =cbind(tmp_file,as.data.frame(dat_tmp$FPKM))
+}

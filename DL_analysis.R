@@ -243,6 +243,7 @@ colnames(gene_name)="gene_name"
 #sort(gene_name)
 
 # import exp of each samples
+
 file_list = dir(pattern = "*.fpkm*")
 
 #extract the data of target gene
@@ -251,7 +252,7 @@ tmp_file = data.frame(1:29)
 for (i in 1:length(file_list)){
   dat_tmp = read.table(file_list[i],header = T,sep = "\t")
   dat_tmp$gene_id=tolower(dat_tmp$gene_id)
-  merge_tmp = merge(dat_tmp,geene_name,by.x = "gene_id",by.y  = "gene_name")
+  merge_tmp = merge(dat_tmp,gene_name,by.x = "gene_id",by.y  = "gene_name")
   tmp_file =cbind(tmp_file,as.data.frame(merge_tmp$FPKM))
 }
 #######################################
@@ -439,6 +440,82 @@ exp.hg38.values <- assay(exp.hg38)
 rownames(exp.hg38.values) <- values(exp.hg38)$external_gene_name
 colnames(exp.hg38.values)
 colnames(exp.hg38)
+rownames(exp.hg38.values)
+clinical_LUAD <- GDCquery_clinic(project = "TCGA-LUAD", type = "clinical")
+colnames(clinical_LUAD)
+clinical_LUAD_m1$clinical_LUAD.submitter_id
+
+t_exp.hg38.values=t(exp.hg38.values)
+
+
+t_exp.hg38.values_ca =as.data.frame(
+  t_exp.hg38.values[grepl(rownames(t_exp.hg38.values),pattern = "01A"),])
+library(limma)
+tmp = strsplit2(rownames(t_exp.hg38.values_ca),split = "-")
+t_exp.hg38.values_ca$pName = paste(tmp[,1],tmp[,2],tmp[,3],sep = "-")
+
+
+clin_gene = merge(clinical_LUAD_m1,t_exp.hg38.values_ca,by.x = "clinical_LUAD.submitter_id","pName")
+
+
+stage = as.character(clin_gene$clinical_LUAD.tumor_stage)
+stage_simple = c()
+
+for(i in 1:length(stage)){
+  if(grepl('iii|iv', stage[i]))
+  {stage_simple[i]=2}
+  else
+  {stage_simple[i]=1}
+}
+clin_gene$stage = stage_simple
+
+colnames(clin_gene)[1:10]
+??survfit
+clin_gene$clinical_LUAD.age_at_diagnosis.365=as.numeric(clin_gene$clinical_LUAD.age_at_diagnosis.365)
+
+library(survival)
+
+clin_gene[1,56719+4]
+
+HR_result = data.frame(1,2)
+geneNameHR = NULL
+
+for(i in 1:(ncol(t_exp.hg38.values_ca)-1)){
+
+  sfit <- coxph(Surv(survial_day, survial_state)
+                ~stage_simple+as.numeric(clinical_LUAD.age_at_diagnosis.365)+clin_gene[,7+i], data=clin_gene)
+  res=summary(sfit)
+  geneNameHR = clin_gene[,7+i]
+  HR_result[i,2] = res$coefficients[3,5]
+  HR_result[i,1] = res$coefficients[3,2]
+}
+
+
+############################################################
+
+
+
+
+
+
+###############################################################
+survial_day=c()
+for (i in 1:nrow(clinical_LUAD_m1)){
+  survial_day[i] = ifelse(is.na(clinical_LUAD_m1$clinical_LUAD.days_to_last_follow_up[i]),clinical_LUAD$days_to_death[i],clinical_LUAD_m1$clinical_LUAD.days_to_last_follow_up[i])
+}
+survial_state = c()
+for (i in 1:nrow(clinical_LUAD_m1)){
+  survial_state[i] = ifelse(is.na(clinical_LUAD_m1$clinical_LUAD.days_to_last_follow_up[i]),1,0)
+}
+
+clinical_LUAD_m1$survial_day = survial_day
+clinical_LUAD_m1$survial_state = survial_state
+
+library(survival)
+?survdiff
+survival::survdiff(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL)
+
+
 
 #write.csv(exp.hg38.values,file = "stad_exp_hg38_FPKM.csv")
 
@@ -475,9 +552,22 @@ query <- GDCquery(project = "TCGA-LUAD",
                   experimental.strategy = "RNA-Seq",
                   platform = "Illumina HiSeq",
                   file.type = "results",
-                  legacy = TRUE)
-# Download a list of barcodes with platform IlluminaHiSeq_RNASeqV2
+                  legacy = TRUE)#hg19
+
+#hg 38 RNA se
+query<- GDCquery(project = "TCGA-LUAD", 
+                           data.category = "Transcriptome Profiling", 
+                           data.type = "Gene Expression Quantification", 
+                           workflow.type = "HTSeq - FPKM")
+
 GDCdownload(query)
+LUADRnaseqSE <- GDCprepare(query)
+LUADRnaseqSE <- assay(LUADRnaseqSE)
+rownames(LUADRnaseqSE) <- values(LUADRnaseqSE)$external_gene_name
+
+
+# Download a list of barcodes with platform IlluminaHiSeq_RNASeqV2
+
 
 # Prepare expression matrix with geneID in the rows and samples (barcode) in the columns
 # rsem.genes.results as values
@@ -504,7 +594,8 @@ gene_name_exp_dif = LUADMatrix[,sign == "01A"|sign == "11A"]
 t1 = edgeR::DGEList(gene_name_exp_dif,group = as.factor(sign[sign == "01A"|sign == "11A"]))
 t2 = edgeR::estimateCommonDisp(t1)
 t3 = edgeR::exactTest(t2)
-t3
+dat = cbind(gene_name_exp_dif)
+
 ?edgeR::exactTest
 ?TCGAanalyze_Normalization
 dataNorm <- TCGAanalyze_Normalization(tabDF = LUADMatrix, geneInfo =  geneInfo)
@@ -796,12 +887,15 @@ colnames(clinical_LUAD)
 
 #clinical_LUAD$
 #临床数据整理
-clinical_names=c("Tumor_Sample_Barcode","FAB_classification","days_to_last_followup","Overall_Survival_Status")
 
-clinical_LUAD_m1 = DataFrame(clinical_LUAD$submitter_id,
+clinical_names=c("Tumor_Sample_Barcode","FAB_classification","days_to_last_followup","Overall_Survival_Status","Age")
+clinical_LUAD_m1=c()
+clinical_LUAD_m1 = data.frame(clinical_LUAD$submitter_id,
                              clinical_LUAD$tumor_stage,
                              clinical_LUAD$days_to_last_follow_up,
-                             clinical_LUAD$days_to_death)
+                             clinical_LUAD$days_to_death,
+                             clinical_LUAD$age_at_diagnosis/365)
+# colnames(clinical_LUAD_m1) = clinical_names
 
 survial_day=c()
 for (i in 1:nrow(clinical_LUAD_m1)){
@@ -814,6 +908,8 @@ for (i in 1:nrow(clinical_LUAD_m1)){
 
 clinical_LUAD_m1$survial_day = survial_day
 clinical_LUAD_m1$survial_state = survial_state
+
+
 
 #head(clinical_LUAD_m1)
 #DL statu & clinical data merge 

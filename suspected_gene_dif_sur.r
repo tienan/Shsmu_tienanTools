@@ -1,6 +1,6 @@
 #################################DL dif gene###########################################
 getwd()
-setwd("D:/R/DL/")
+setwd("../DL/")
 # read different exp gene data 
 genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
 genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
@@ -11,6 +11,9 @@ genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t"
 #Union
 diff_gene = union(genes_1975_dl_con[genes_1975_dl_con$q_value<0.05,]$gene,
                   genes_A549_dl_con[genes_A549_dl_con$q_value<0.05,]$gene)
+#intersect
+diff_gene = intersect(genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]$gene,
+                  genes_A549_dl_con[genes_A549_dl_con$q_value<0.1,]$gene)
 
 # extract the foldchange of diff exp gene
 diff_gene_fold = cbind(as.character(genes_1975_dl_con[(genes_1975_dl_con$gene)%in%diff_gene,]$gene),
@@ -35,21 +38,100 @@ write.csv(x = diff_gene_filer_1_union,file = "diff_gene_filer_1_union_DL.csv")
 
 #################################tumor vs benign dif gene########################################
 getwd()
+# query <- GDCquery(project = "TCGA-LUAD", 
+#                   data.category = "Gene expression",
+#                   data.type = "Gene expression quantification",
+#                   experimental.strategy = "RNA-Seq",
+#                   platform = "Illumina HiSeq",
+#                   file.type = "results",
+#                   legacy = TRUE)
+#LUADMatrix <- assay(LUADRnaseqSE ,"raw_count")
+# Download a list of barcodes with platform IlluminaHiSeq_RNASeqV2  hg19
 query <- GDCquery(project = "TCGA-LUAD", 
-                  data.category = "Gene expression",
-                  data.type = "Gene expression quantification",
-                  experimental.strategy = "RNA-Seq",
-                  platform = "Illumina HiSeq",
-                  file.type = "results",
-                  legacy = TRUE)
-# Download a list of barcodes with platform IlluminaHiSeq_RNASeqV2
+                           data.category = "Transcriptome Profiling", 
+                           data.type = "Gene Expression Quantification", 
+                           workflow.type = "HTSeq - FPKM")
+#############################################up hg38
 GDCdownload(query)
 
 # Prepare expression matrix with geneID in the rows and samples (barcode) in the columns
 # rsem.genes.results as values
 LUADRnaseqSE <- GDCprepare(query)
+rownames(LUADRnaseqSE) <- values(LUADRnaseqSE)$external_gene_name
+LUADMatrix <- assay(LUADRnaseqSE)
 library(SummarizedExperiment)
-LUADMatrix <- assay(LUADRnaseqSE ,"raw_count") # or BRCAMatrix <- assay(BRCARnaseqSE,"raw_count")
+ # or LUADMatrix <- assay(BRCARnaseqSE,"raw_count")
+dataNorm <- TCGAanalyze_Normalization(tabDF = LUADMatrix, geneInfo =  geneInfo)
+dataNorm_DL = LUADMatrix[rownames(LUADMatrix)%in%diff_gene_filer_1[,2],]
+dataNorm_DL_sort = dataNorm_DL[order(rownames(dataNorm_DL)),]
+
+
+tabSurvKM<-
+  TCGAanalyze_SurvivalKM(clinical_patient_Cancer,dataNorm_DL_sort,
+                         Genelist = rownames(dataNorm_DL_sort),
+                         p.cut = 0.05,
+                         Survresult = T,
+                         ThreshTop=0.5,
+                         ThreshDown=0.5)
+
+write.csv(tabSurvKM,"sur_DL_union.csv")
+
+?TCGAanalyze_SurvivalKM
+dataNorm[rownames(dataNorm) == "CTSV"]
+
+write.csv(rownames(dataNorm),"tmp.txt")
+
+
+diff_gene_filer_1
+
+dataNorm_DL_sort[,1]
+
+fivenum = apply(dataNorm_DL, 2, fivenum)
+
+gene_name_exp_carcer_sign = dataNorm_DL_sort
+
+# nrow(DL_sign)
+# nrow(dataNorm_DL)
+# rownames(dataNorm_DL_sort)
+
+for (i in 1:nrow(gene_name_exp_carcer_sign)){
+  
+  if (DL_sign[i]==1)# DL increase
+  {
+    gene_name_exp_carcer_sign[i,] = 
+      dataNorm_DL_sort[i,] - 
+      fivenum( dataNorm_DL_sort[i,])[4] 
+    gene_name_exp_carcer_sign[i,] = 
+      ifelse(gene_name_exp_carcer_sign[i,]<0,0,1)
+  }else# DL decrease
+  {
+    gene_name_exp_carcer_sign[i,] = 
+      dataNorm_DL_sort[i,] - 
+      fivenum( dataNorm_DL_sort[i,])[2] 
+    gene_name_exp_carcer_sign[i,] = 
+      ifelse(gene_name_exp_carcer_sign[i,]<0,1,0)
+  }
+}
+
+
+apply(gene_name_exp_carcer_sign, 2, sum)
+
+dataNorm_DL_sort_DLSign = as.data.frame(
+  rbind(dataNorm_DL_sort,apply(gene_name_exp_carcer_sign, 2, sum)))
+
+
+dataNorm_DL_sort[23,] = apply(gene_name_exp_carcer_sign, 2, sum)
+
+tabSurvKM<-
+  TCGAanalyze_SurvivalKM(clinical_patient_Cancer,dataNorm_DL_sort,
+                         Genelist = rownames(dataNorm_DL_sort),
+                         p.cut = 0.05,
+                         Survresult = T,
+                         ThreshTop=0.5,
+                         ThreshDown=0.5)
+
+
+rownames(dataNorm_DL_sort_DLSign) = c(rownames(dataNorm_DL_sort),"DL")
 ###############
 # For gene expression if you need to see a boxplot correlation and AAIC plot to define outliers you can run
 LUADRnaseq_CorOutliers <- TCGAanalyze_Preprocessing(LUADRnaseqSE)
@@ -102,6 +184,7 @@ dataDEGsFiltLevel <- TCGAanalyze_LevelTab(dataDEGs,"Tumor","Normal",
 
 ###############################################gene sur TCGA##################################
 library(TCGAbiolinks)
+diff_gene_filer_1
 # Survival Analysis SA
 tabSurvKMcomplete <- NULL
 clinical_patient_Cancer <- GDCquery_clinic("TCGA-LUAD","clinical")
