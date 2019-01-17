@@ -98,7 +98,7 @@ dataNorm <- TCGAanalyze_Normalization(tabDF = LUADMatrix, geneInfo =  geneInfo)
 # quantile filter of genes
 dataFilt <- TCGAanalyze_Filtering(tabDF = dataNorm,
                                   method = "quantile", 
-                                  qnt.cut =  0.25)
+                                  qnt.cut =  0.01)
 
 # selection of normal samples "NT"
 samplesNT <- TCGAquery_SampleTypes(barcode = colnames(dataFilt),
@@ -167,6 +167,7 @@ write.csv(x = mut_genes[mut_genes$Hugo_Symbol%in%dl_union_cancer$mRNA,c(1:20)]
 ##### DL condition ###################################################################
 # intersect
 setwd("D:/R/DL/")
+setwd("/home/tienan/R/DL/")
 
 # read different exp gene data 
 genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
@@ -188,7 +189,7 @@ gene_name = as.data.frame(sort(tolower(diff_gene_filer_1[,1])))
 colnames(gene_name)="gene_name"
 # import exp of each samples
 file_list = dir(pattern = "*.fpkm*")
-
+dir()
 #extract the data of target gene
 ?data.frame
 tmp_file=c()
@@ -227,6 +228,7 @@ LUADRnaseqSE <- GDCprepare(query.exp.hg38)
 
 rownames(LUADRnaseqSE) <- values(LUADRnaseqSE)$external_gene_name
 exp.hg38.values <- assay(LUADRnaseqSE)
+head(exp.hg38.values)
 #write.csv(exp.hg38.values,file = "stad_exp_hg38_FPKM.csv")
 # extract the targeted gene
 rownames(exp.hg38.values) = tolower(rownames(exp.hg38.values))
@@ -284,6 +286,42 @@ for (i in 1:length(DL_sign_sort)){
 gene_name_exp_carcer_sign_sum = apply(gene_name_exp_carcer_sign,2,sum)
 table(gene_name_exp_carcer_sign_sum)
 
+###########################################DL heatmap
+DL_gene_exp = rbind(gene_name_exp_carcer_sort,ifelse(gene_name_exp_carcer_sign_sum>5,100,0))
+
+DL_gene_exp_orderDLS = DL_gene_exp[,order(DL_gene_exp[24,])]
+
+DL_gene_exp_orderDLS[c(1:23),] = apply(DL_gene_exp_orderDLS[c(1:23),],1,scale)
+
+
+?pheatmap
+install.packages("pheatmap")
+library(pheatmap)
+tiff(filename = "Figure-2.tif",
+     width = 1800, height = 3000, units = "px", pointsize = 12,
+     compression = "lzw",
+     bg = "white", res = 400, family = "", restoreConsole = TRUE
+)
+pheatmap(DL_gene_exp_orderDLS,
+         clustering_distance_cols  = "euclidean",
+         show_colnames =   F,
+         scale = "row",
+         cluster_cols = F,
+         cluster_rows = F
+)
+
+pheatmap(DL_gene_exp_orderDLS[c(1,24),],
+         clustering_distance_cols  = "euclidean",
+         scale="row",
+         
+         show_colnames =   F,
+         cluster_cols = F,
+         cluster_rows = F
+)
+
+
+####
+
 names = names(gene_name_exp_carcer_sign_sum)
 name = c()
 for (i in 1:length(gene_name_exp_carcer_sign_sum)){
@@ -330,10 +368,10 @@ stage = as.character(clin_DL$clinical_LUAD.tumor_stage)
 stage_simple = c()
 ?grepl
 for(i in 1:length(stage)){
-  if(grepl('[i,ii][a,b]', stage[i]))
-  {stage_simple[i]=1}
-  else
+  if(grepl('iii|iv', stage[i]))
   {stage_simple[i]=2}
+  else
+  {stage_simple[i]=1}
 }
 clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>10,1,0)
 
@@ -347,12 +385,72 @@ require("survival")
 library(survminer)
 ?survdiff
 ??survival
+nrow(clin_DL)
 survival::survdiff(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL)
 fit <- coxph(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL) 
-fit<- survfit(Surv(survial_day, survial_state)~group+stage_simple, data=clin_DL)
+summary(fit)
+
+
+
+
+fit <- coxph(Surv(survial_day, survial_state)~
+               as.numeric(gene_name_exp_carcer_sign_sum),data=clin_DL) 
+summary(fit)
+
+resP=c()
+j=1
+for (i in 4:16){
+  clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>5,1,0)
+  fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
+  summary(fit)
+  resP[j]= fit$chisq
+  j=j+1
+}
+fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
+fit
+summary(fit)
+
+fit <- coxph(Surv(survial_day, survial_state)~group,data=clin_DL) 
+summary(fit)
+
+tiff(filename = "DL_sur.tiff",
+     width = 2480, height = 1880, units = "px", pointsize = 12,
+     compression = "lzw",
+     bg = "white", res = 300)
+fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL)
+splots <- list()
+splots[[1]] = ggsurvplot(fit, data = clin_DL,
+           font.main = c(16, "bold", "darkblue"),
+           font.x = c(20, "bold.italic", "darkred"),
+           font.y = c(20, "bold.italic", "darkred"),
+           font.tickslab = c(20, "plain", "Black"))
+splots[[2]] <- ggsurvplot(fit, data = clin_DL, risk.table = TRUE, ggtheme = theme_grey())# Arrange multiple ggsurvplots and print the output
+arrange_ggsurvplots(splots, print = TRUE,  ncol = 2, nrow = 1, risk.table.height = 0.4)
+dev.off()
+
+
+survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
+
+ggsurvplot(fit, data = clin_DL)
+
+
+fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL_stage_1)
+survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL_stage_1)
 ggsurvplot(fit, data = clin_DL)
 summary(fit)
 ??ggsurvplot
+
+clin_DL_stage_1 = clin_DL[stage_simple==1,]
+fit <- coxph(Surv(survial_day, survial_state)~group,data=clin_DL_stage_1) 
+summary(fit)
+fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL_stage_1)
+ggsurvplot(fit, data = clin_DL_stage_1)
+summary(fit)
+survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL_stage_1)
+ggsurvplot(fit, data = clin_DL)
+
+
+
 
 ####################################################################
 file_list = dir(pattern = "*.fpkm*")

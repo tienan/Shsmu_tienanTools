@@ -115,6 +115,9 @@ resDat = cbind(dat$GeneName,t3$table)
 
 write.csv(resDat,file = "H1975ConvsDL.csv")
 
+write.csv(resDat[resDat$PValue<0.05,],file = "H1975ConvsDL_sig.csv")
+
+
 #A549 con vs dl
 setwd("/home/tienan/R/DL/")
 dat = read.csv("salmon_exp_1st_seq.csv")
@@ -129,6 +132,11 @@ t3 = edgeR::exactTest(t2)
 
 resDat = cbind(dat$GeneName,t3$table)
 write.csv(resDat,file = "A549ConvsDL.csv")
+
+write.csv(resDat[resDat$PValue<0.05,],file = "A549ConvsDL_sig.csv")
+
+
+
 #######################################
 
 
@@ -148,6 +156,7 @@ t2 = edgeR::estimateCommonDisp(t1)
 t3 = edgeR::exactTest(t2)
 resDat = cbind(dat$Name,t3$table)
 write.csv(resDat,file = "gene_Base2b_ConvsDL_p10_CC.csv") #change 
+
 
 # BASE2B CC P30   Con vs DL
 
@@ -173,6 +182,9 @@ t3 = edgeR::exactTest(t2)
 resDat = cbind(dat$Name,t3$table)
 write.csv(resDat,file = "gene_Base2b_ConvsDL_p10_CT.csv") #change 
 
+write.csv(resDat[resDat$PValue<0.05,],file = "gene_Base2b_ConvsDL_p10_CT_sig.csv")
+
+
 # BASE2B CT P30   Con vs DL
 
 gene_Base2b_ConvsDL_p30 = dat[,c(125:132,85:92)] # change 
@@ -184,6 +196,8 @@ t2 = edgeR::estimateCommonDisp(t1)
 t3 = edgeR::exactTest(t2)
 resDat = cbind(dat$Name,t3$table)
 write.csv(resDat,file = "gene_Base2b_ConvsDL_p30_CT.csv") #change 
+
+write.csv(resDat[resDat$PValue<0.05,],file = "gene_Base2b_ConvsDL_p30_CT_sig.csv")
 
 ####################################CC    
 # P10 vs P0 CC 
@@ -355,17 +369,91 @@ nrow(tmp[tmp$PValue<0.05&tmp$logFC>0,])
 nrow(tmp[tmp$PValue<0.05&tmp$logFC<0,])
 
 
-####################################################analysis
+####################################################analysis#################################################
 
 LUAD_1 = read.csv("LUAU_DEG_hg38_edgeR.csv")
 
-LUAD_2 = read.csv("/media/tienan/00006784000048231/R/DEGs/LUAD_TCGAbiolinks.csv")
+LUAD_1 = LUAD_1[LUAD_1$PValue<0.05,]
+
+LUAD_2 = read.csv("/media/tienan/0000678400004823//R/DEGs/LUAD_TCGAbiolinks.csv")
 
 H1975_DL_DEGs = read.csv("H1975ConvsDL.csv")
 
 A549_DL_DEGs = read.csv("A549ConvsDL.csv")
 
-gene_DL = intersect(H1975_DL_DEGs[H1975_DL_DEGs$PValue<0.05,]$dat.GeneName,A549_DL_DEGs[A549_DL_DEGs$PValue<0.05,]$dat.GeneName)
+write.csv(cbind(H1975_DL_DEGs,A549_DL_DEGs),file = "A549_H1975_DL.csv")
+
+#
+gene_DL = intersect(H1975_DL_DEGs[H1975_DL_DEGs$PValue<0.1,]$dat.GeneName,A549_DL_DEGs[A549_DL_DEGs$PValue<0.1,]$dat.GeneName)
+
+
+dat = read.csv("salmon_exp_1st_seq.csv")
+
+gene_A549_H1975_DLvsCon = dat[,c(2,3:8,24:29)]
+
+
+gene_A549_H1975_DLvsCon_target = gene_A549_H1975_DLvsCon[gene_A549_H1975_DLvsCon$GeneName%in%gene_DL,][,c(1:13)]
+
+
+colnames(gene_A549_H1975_DLvsCon_target)=
+  c("geneName","H1975_Control_1","H1975_Control_2","H1975_Control_3","H1975_DL_1","H1975_DL_2",
+    "X1975_DL_3","A549_Control_1","A549_Control_2","A549_Control_3","A549_DL_1","A549_DL_2",
+    "A549_DL_3")
+
+#rownames(gene_A549_H1975_DLvsCon_target) = gene_A549_H1975_DLvsCon_target[,1]
+
+setwd("/home/tienan/R/DL/")
+
+#install.packages("pheatmap")
+library(pheatmap)
+tiff(filename = "Figure-H1975.tif",
+     width = 1800, height = 3000, units = "px", pointsize = 12,
+     compression = "lzw",
+     bg = "white", res = 400)
+
+pheatmap(gene_A549_H1975_DLvsCon_target[,c(2:7)],
+         clustering_distance_cols  = "euclidean",
+         show_colnames =   T,
+         show_rownames = F,
+         scale = "row",
+         cluster_cols = T,
+         cluster_rows = F,
+         fontsize_row = 3, 
+         fontsize_col = 12
+)
+
+dev.off()
+
+tiff(filename = "Figure-A549.tif",
+     width = 1800, height = 3000, units = "px", pointsize = 12,
+     compression = "lzw",
+     bg = "white", res = 400)
+
+pheatmap(gene_A549_H1975_DLvsCon_target[,c(8:13)],
+         clustering_distance_cols  = "euclidean",
+         show_colnames =   T,
+         show_rownames = F,
+         scale = "row",
+         cluster_cols = T,
+         cluster_rows = F,
+         fontsize_row = 3, 
+         fontsize_col = 12
+)
+
+dev.off()
+
+
+###################################
+gene_DL = intersect(H1975_DL_DEGs[H1975_DL_DEGs$PValue<0.1,]$dat.GeneName,A549_DL_DEGs[A549_DL_DEGs$PValue<0.1,]$dat.GeneName)
+
+intersect(diff_gene_filer_1[,1],gene_DL)
+
+cbind(H1975_DL_DEGs,A549_DL_DEGs)[cbind(H1975_DL_DEGs,A549_DL_DEGs)[,2]%in%diff_gene_filer_1[,1],]
+
+
+mean(cbind(H1975_DL_DEGs,A549_DL_DEGs)[,4])
+mean(cbind(H1975_DL_DEGs,A549_DL_DEGs)[,9])
+########################################
 
 H1975_subset = H1975_DL_DEGs[H1975_DL_DEGs$dat.GeneName%in%gene_DL,]
 nrow(H1975_subset)
@@ -377,8 +465,13 @@ A549_subset = A549_subset[order(A549_subset$dat.GeneName),]
 
 DL_genes = H1975_subset[H1975_subset$logFC*A549_subset$logFC>0,]
 nrow(DL_genes)
+setwd("/home/tienan/R/DL/")
+#output data##############################
+write.csv(DL_genes,file = "H1975A549_DL_diff_0.1.csv")
 
-###############################LUAD_2
+
+
+###############################LUAD_1
 LUAD_1_DL_gene = intersect(LUAD_1$rownames.gene_name_exp_dif.,DL_genes$dat.GeneName)
 
 LUAD_1_subset = LUAD_1[LUAD_1$rownames.gene_name_exp_dif.%in%LUAD_1_DL_gene,]
@@ -397,6 +490,14 @@ LUAD_DL_geneset =  DL_genes_subset_1[LUAD_1_subset_1$logFC*DL_genes_subset_1$log
 nrow(LUAD_DL_geneset)
 
 
+
+write.csv(LUAD_DL_geneset,file = "H1975A549_DL_diff_cancer.csv")
+
+
+
+head(LUAD_sur_hg19_HR_DLset_modify_sig)
+
+LUAD_sur_hg19_HR_DLset_modify_sig$logHR = log(LUAD_sur_hg19_HR_DLset_modify_sig$HR)
 
 
 ###############################LUAD_2
@@ -456,12 +557,98 @@ clinical =function(){
   
   clinical_LUAD <- GDCquery_clinic(project = "TCGA-LUAD", type = "clinical")
   colnames(clinical_LUAD)
+ 
   
   
-  
-  HR = read.
   
 }
+
+##########################################################prevention analysis
+
+
+#####CAR
+
+#LUAD_1 = read.csv("LUAU_DEG_hg38_edgeR.csv")
+
+#LUAD_2 = read.csv("/media/tienan/0000678400004823//R/DEGs/LUAD_TCGAbiolinks.csv")
+
+LUAD_sur_hg19_HR_DLset_modify_sig = 
+  read.csv("/media/tienan/0000678400004823/R/DEGs/LUAD_sur_hg19_HR_DLset_modify_sig.csv")
+
+########## DL_R
+
+gene_Base2b_ConvsDL_p30_CT = read.csv("gene_Base2b_ConvsDL_p30_CT.csv")
+
+gene_Base2b_ConvsDL_p30_CT
+
+nrow(gene_Base2b_ConvsDL_p30_CT)
+
+gene_Base2b_ConvsDL_p10_CT = read.csv("gene_Base2b_ConvsDL_p10_CT.csv")
+
+
+gene_Base2b_ConvsDL = 
+  intersect(gene_Base2b_ConvsDL_p30_CT[gene_Base2b_ConvsDL_p30_CT$PValue<0.05,]$dat.Name,
+                    gene_Base2b_ConvsDL_p30_CT[gene_Base2b_ConvsDL_p10_CT$PValue<0.05,]$dat.Name)
+
+gene_Base2b_ConvsDL_same_direction = 
+  gene_Base2b_ConvsDL_p30_CT[gene_Base2b_ConvsDL_p30_CT$logFC*gene_Base2b_ConvsDL_p10_CT$logFC>0,]
+
+
+c("ACAT2","DHCR24","EBP",  "SCD","SQLE")
+
+
+gene_Base2b_ConvsDL_targets = 
+  gene_Base2b_ConvsDL_p30_CT[
+    gene_Base2b_ConvsDL_p30_CT$dat.Name%in%intersect(gene_Base2b_ConvsDL,gene_Base2b_ConvsDL_same_direction$dat.Name),]
+
+
+nrow(gene_Base2b_ConvsDL_targets)
+
+write.csv(gene_Base2b_ConvsDL_targets,file = "gene_Base2b_ConvsDL_targets_p10p30.csv")
+
+
+LUAD_1_target = LUAD_1[LUAD_1$rownames.gene_name_exp_dif.%in%gene_Base2b_ConvsDL_targets$dat.Name,]
+nrow(LUAD_1_target)
+gene_Base2b_ConvsDL_targets_1 = gene_Base2b_ConvsDL_targets[
+  gene_Base2b_ConvsDL_targets$dat.Name%in%LUAD_1_target$rownames.gene_name_exp_dif.,]
+nrow(gene_Base2b_ConvsDL_targets_1)
+nrow(gene_Base2b_ConvsDL_targets[
+  gene_Base2b_ConvsDL_targets$dat.Name%in%LUAD_1_target$rownames.gene_name_exp_dif.,])
+
+LUAD_1_target[order(LUAD_1_target$rownames.gene_name_exp_dif.),]
+gene_Base2b_ConvsDL_targets_1[order(gene_Base2b_ConvsDL_targets_1$dat.Name),]
+?merge
+m1 = merge(LUAD_1_target,gene_Base2b_ConvsDL_targets_1,by.x ="rownames.gene_name_exp_dif.",by.y = "dat.Name")
+
+write.csv(m1[m1$logFC.x*m1$logFC.y<0,],"gene_Base2b_ConvsDL_targets_p10p30_cancer.csv")
+
+
+################################################generation###################################
+
+
+# P10 vs P0 CT 
+
+gene_Base2b_P10vsP0_CT = read.csv("gene_Base2b_P10vsP0_CT.csv")
+
+
+# P30 vs P0 CT 
+
+gene_Base2b_P30vsP0_CT = read.csv("gene_Base2b_P30vsP0_CT.csv")
+
+# P30 vs P10 CT 
+
+gene_Base2b_P10vspP30_CT = read.csv("gene_Base2b_P10vspP30_CT.csv")
+?intersect
+
+generation = 
+intersect(
+intersect(
+gene_Base2b_P10vsP0_CT[gene_Base2b_P10vsP0_CT$PValue<0.05,]$dat.Name,
+gene_Base2b_P30vsP0_CT[gene_Base2b_P30vsP0_CT$PValue<0.05,]$dat.Name),
+gene_Base2b_P10vspP30_CT[gene_Base2b_P10vspP30_CT$PValue<0.05,]$dat.Name
+)
+
+setdiff(m1[m1$logFC.x*m1$logFC.y<0,]$rownames.gene_name_exp_dif.,generation)
 
 
 

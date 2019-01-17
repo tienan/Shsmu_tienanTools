@@ -417,6 +417,7 @@ head(clinical_LUAD_m1 )
 #https://support.bioconductor.org/p/101276/
 #https://gist.githubusercontent.com/tiagochst/fab346c19fa97d62a4bfb943024d1566/raw/0e7846e7b838c8c8403e4d915fc735001d8f1d06/getExp.R
 BiocManager::install("TCGAbiolinks")
+BiocManager::install("SummarizedExperiment")
 library(SummarizedExperiment)
 library(TCGAbiolinks)
 library(limma)
