@@ -72,7 +72,11 @@ library("randomizr")
 set.seed(343)
 Group <- complete_ra(N=120,num_arms = 2)
 
-Header = "Xihua"
+
+
+
+
+#Header = "Xihua"
 #generate 5 Number
 
 set.seed(343)
@@ -196,3 +200,40 @@ write.csv(file = "THCA_tableRandom.csv",x = cbind(no,Z,dat$Batch,dat$Kit))
                                            
                                            
                                            
+#   wangruilang ####################################################################
+#https://cran.r-project.org/web/packages/randomizr/vignettes/randomizr_vignette.html
+
+
+install.packages("randomizr")
+
+library("randomizr")
+
+
+#hospital = c(rep(1,time=60),rep(2,time=40),rep(3,time=40),rep(4,time=40),rep(5,time=40))
+set.seed(121)
+Z <- block_ra(blocks = hospital, num_arms =2)
+table(Z,hospital)
+Header = "WANG"
+set.seed(343)
+a3 = sample(1:10000,length(hospital))
+no=paste(Header,"_",a3,sep = "")
+write.csv(file = "tableRandom.csv",x = cbind(no,hospital,Z))
+
+
+######################CHANGE  to Competition into the group, THE Classification indication are SOFA AND APACHE 
+
+
+sofa = c(rep(1,time=))
+apache = c()
+          
+           
+hospital = c(rep(1,time=60),rep(2,time=40),rep(3,time=40),rep(4,time=40),rep(5,time=40))
+set.seed(121)
+# Z <- block_ra(blocks = hospital, num_arms =2)
+table(Z,hospital)
+Header = "WANG"
+set.seed(343)
+a3 = sample(1:10000,length(hospital))
+no=paste(Header,"_",a3,sep = "")
+write.csv(file = "tableRandom.csv",x = cbind(no,hospital,Z))
+

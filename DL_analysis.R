@@ -3,7 +3,7 @@
 setwd("../pm2.5/")
 =======
 library("limma")
-setwd("D:/R/pm2.5/")
+setwd("/home/tienan/R/DL/")
 >>>>>>> ffb67f991571f503b06742b37b2530d36e21bb61
 
 lipidMetabolism = read.table("lipidMetabolism.txt")
@@ -199,10 +199,10 @@ setwd("../DL/")
 genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
 genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
 
-
-genes_1975_dl_con[genes_1975_dl_con$gene=="SLPI",]
-
-genes_A549_dl_con [genes_1975_dl_con$gene=="VCAN",]
+# 
+# genes_1975_dl_con[genes_1975_dl_con$gene=="SLPI",]
+# 
+# genes_A549_dl_con [genes_1975_dl_con$gene=="VCAN",]
 
 #cutoff < 0.1 to get diff exp gene data
 diff_H1975 = genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]
