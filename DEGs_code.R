@@ -3,7 +3,9 @@ source("https://bioconductor.org/biocLite.R")
 BiocManager::install("TCGAbiolinks")
 BiocManager::install("SummarizedExperiment")
 BiocManager::install("limma")
-
+BiocManager::install("GenomeInfoDb")
+BiocManager::install("SummarizedExperiment", version = "3.5")
+install.packages("SummarizedExperiment")
 
 #importing the downloaded packages(tools) 
 library(SummarizedExperiment)
@@ -22,10 +24,6 @@ GDCdownload(query.exp.hg38)
 GDCdownload(query.exp.hg38,files.per.chunk = 1)
 
 exp.hg38.values <- assay(exp.hg38)
-<<<<<<< HEAD
 rownames(exp.hg38.values) <- values(exp.hg38)$external_gene_name
 
 #  DEGs cal 
-=======
-rownames(exp.hg38.values) <- values(exp.hg38)$external_gene_name
->>>>>>> 0053f2451b502d6024244d067a08a08e5e305535

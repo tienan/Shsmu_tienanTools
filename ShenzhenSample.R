@@ -209,15 +209,15 @@ install.packages("randomizr")
 library("randomizr")
 
 
-#hospital = c(rep(1,time=60),rep(2,time=40),rep(3,time=40),rep(4,time=40),rep(5,time=40))
-set.seed(121)
+hospital = c(rep(1,time=224))
+set.seed(131)
 Z <- block_ra(blocks = hospital, num_arms =2)
 table(Z,hospital)
 Header = "WANG"
 set.seed(343)
 a3 = sample(1:10000,length(hospital))
 no=paste(Header,"_",a3,sep = "")
-write.csv(file = "tableRandom.csv",x = cbind(no,hospital,Z))
+write.csv(file = "2019-3-20-suiji-wangrui-shiyi-tableRandom.csv",x = cbind(no,hospital,Z))
 
 
 ######################CHANGE  to Competition into the group, THE Classification indication are SOFA AND APACHE 
@@ -235,5 +235,5 @@ Header = "WANG"
 set.seed(343)
 a3 = sample(1:10000,length(hospital))
 no=paste(Header,"_",a3,sep = "")
-write.csv(file = "tableRandom.csv",x = cbind(no,hospital,Z))
+write.csv(file = "2019-3-20-suiji-wangrui-shiyi-tableRandom.csv",x = cbind(no,hospital,Z))
 
