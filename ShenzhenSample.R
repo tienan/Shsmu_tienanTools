@@ -209,15 +209,33 @@ install.packages("randomizr")
 library("randomizr")
 
 
+<<<<<<< HEAD
+#hospital = c(rep(1,time=60),rep(2,time=40),rep(3,time=40),rep(4,time=40),rep(5,time=40))
+#set.seed(121)
+=======
 hospital = c(rep(1,time=224))
 set.seed(131)
+>>>>>>> eeeb1cbd913a54713badf5dcdba34cd1089bb5fc
 Z <- block_ra(blocks = hospital, num_arms =2)
-table(Z,hospital)
-Header = "WANG"
-set.seed(343)
-a3 = sample(1:10000,length(hospital))
+#2019.3.7
+#Z <- complete_ra(N=220, num_arms =2)
+#table(Z,hospital)
+Header = "RESCUE"
+set.seed(342)
+a3 = sample(1:10000,224)
 no=paste(Header,"_",a3,sep = "")
+<<<<<<< HEAD
+
+set.seed(1)
+Z <- complete_ra(N = 224, m_each = c(112, 112),
+                 conditions = c("control",  "treatment"))
+table(Z[1:202])
+
+table(Z)
+write.csv(file = "tableRandom.csv",x = cbind(no,as.character(Z)))
+=======
 write.csv(file = "2019-3-20-suiji-wangrui-shiyi-tableRandom.csv",x = cbind(no,hospital,Z))
+>>>>>>> eeeb1cbd913a54713badf5dcdba34cd1089bb5fc
 
 
 ######################CHANGE  to Competition into the group, THE Classification indication are SOFA AND APACHE 
