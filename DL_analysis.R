@@ -156,7 +156,11 @@ dev.off()
 
 
 
-##########################DL analysis
+################################################
+#DL analysis#
+
+#################################################
+setwd("../DL/")
 source("https://bioconductor.org/biocLite.R")
 BiocManager::install("edgeR")
 install.packages("gdata")
@@ -181,7 +185,7 @@ data(GeneMat)
 # BiocManager::install("tscvh")
 # BiocInstaller::biocLite("tscvh")
 
-library(tscvh)
+#library(tscvh)
 
 
 library("edgeR")
