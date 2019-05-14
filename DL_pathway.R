@@ -23,7 +23,7 @@ diff_gene_filer_1  = as.data.frame(diff_gene_filer_1 )
 colnames(diff_gene_filer_1)=c("GeneName_1","GeneName_2","log2FoldChange_1","qval_1","log2FoldChange_2","qval_2")
 # Cancer vs benign diff genes LUAD##########################################################################
 source("https://bioconductor.org/biocLite.R")
-BiocManager::install("SummarizedExperiment")
+biocLite("SummarizedExperiment")
 BiocManager::install("TCGAbiolinks")
 BiocManager::install("zoo")
 BiocManager::install("limma")
