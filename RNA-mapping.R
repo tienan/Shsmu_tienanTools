@@ -1,3 +1,11 @@
+#########################SHSMU
+
+
+#########################
+
+
+
+
 #index build 
 setwd("/LVM1/LVM/hg38/")
 system("salmon index -t hg38.transcript.fa  -i  salmon_transcript_index  --type quasi -k 31", intern = TRUE)

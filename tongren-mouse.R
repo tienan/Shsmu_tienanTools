@@ -1,3 +1,78 @@
+#setwd("C:\Users\tienan\Documents\R\")
+# zhangjingfu Tongji 
+setwd("C:/Users/tienan/Documents/R/")
+dat = read.table("tongren_zhangjingfu.txt",header = T,sep = "\t")
+head(dat)
+id = read.table("tongren_zhangjingfu_id_name.txt",header = F,sep = "\t")
+dat$Gene_id=toupper(dat$Gene_id)
+
+order()
+?merge
+
+dat_1 = merge(dat[dat$Gene_id%in%id$V1,],id,by.x = "Gene_id",by.y = "V1")
+
+dat_1=dat_1[order(dat_1$V2),]
+
+rownames(dat_1)=dat_1$Gene_id
+
+library(pheatmap)
+tiff(filename = "?.tif",
+     width = 1800, height = 4000, units = "px", pointsize = 12,
+     compression = "lzw",
+     bg = "white", res = 400
+)
+pheatmap(dat_1[,c(2:9)],
+         #         clustering_distance_cols = "", 
+         clustering_distance_rows = "euclidean",
+         cluster_rows = T,
+         scale="row",
+         fontsize_row = 10, 
+         fontsize_col = 15)
+dev.off()
+
+
+dat[toupper(dat$Gene_id)%in%c("SIRT1","SIRT6"),]
+
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("edgeR")
+library(edgeR)
+library(limma)
+
+
+t1 = edgeR::DGEList(dat[,2:9], group = as.factor(c("Con","Con","Radiation",
+                                                  "Radiation","Radiation","Radiation","Radiation","Radiation")))
+t2 = edgeR::estimateCommonDisp(t1)
+t3 = edgeR::exactTest(t2)
+
+diff_genes = t3$table[t3$table$PValue<0.01&abs(t3$table$logFC)>1,]
+
+diff_genes = t3$table[t3$table$PValue<0.05,]
+
+diff_genes[rownames(diff_genes)%in%c("16392","16397"),]
+
+t3$table[rownames(t3$table)%in%c("16392","16397"),]
+
+?kmeans
+?scale
+cl = kmeans(t(scale(t(dat_1[,c(2:9)]))),6)
+cl$cluster
+
+
+pheatmap(t(scale(t(dat_1[,c(2:9)]))))
+
+cbind(dat_1[cl$cluster=="1",]$Gene_id,as.character(dat_1[cl$cluster=="1",]$V2))
+
+
+cbind(dat_1[cl$cluster%in%c("2","3","4","5"),]$Gene_id,
+      as.character( dat_1[cl$cluster%in%c("2","3","4","5"),]$V2))
+
+
+dat_1$V2
+
+ifelse()
+
+
 dat = read.table("../tongren-mouse-data.txt",sep = "\t",header = T)
 
 head(dat)
