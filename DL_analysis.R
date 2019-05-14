@@ -162,6 +162,7 @@ dev.off()
 #################################################
 setwd("../DL/")
 source("https://bioconductor.org/biocLite.R")
+install.packages("BiocManager")
 BiocManager::install("edgeR")
 install.packages("gdata")
 install.packages("heatmaply")
