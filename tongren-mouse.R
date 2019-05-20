@@ -1,10 +1,37 @@
 #setwd("C:\Users\tienan\Documents\R\")
 # zhangjingfu Tongji 
 setwd("C:/Users/tienan/Documents/R/")
-dat = read.table("tongren_zhangjingfu.txt",header = T,sep = "\t")
+dat = read.table("Human_jingfuzhang_1.txt",header = T,sep = "\t")
 head(dat)
+dat = read.table("Human_jingfuzhang_1.txt",header = T,sep = "\t")
 id = read.table("tongren_zhangjingfu_id_name.txt",header = F,sep = "\t")
-dat$Gene_id=toupper(dat$Gene_id)
+id = c(as.character(id[,1]),"TP53BP1","NUDT16L1","KAT5","RNF168")
+dat$Gene=toupper(dat$Gene_id)
+
+dat_1 =dat[dat$Gene%in%id,c(2:ncol(dat))]
+rownames(dat_1) = dat[dat$Gene%in%id,1]
+
+
+library(pheatmap)
+tiff(filename = "Human_tongren_jingfu.tif",
+     width = 3800, height = 4000, units = "px", pointsize = 12,
+     compression = "lzw",
+     bg = "white", res = 400
+)
+#?pheatmap
+pheatmap(log(dat_1+0.1),
+         #         clustering_distance_cols = "", 
+         clustering_distance_rows = "euclidean",
+         cluster_rows = T,
+         cluster_cols = T,
+         #scale="row",
+         fontsize_row = 10, 
+         fontsize_col = 10,
+         show_colnames = F
+         )
+dev.off()
+
+
 
 order()
 ?merge
