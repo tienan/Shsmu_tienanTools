@@ -1,3 +1,4 @@
+getwd()
 setwd("../Shsmu_tienanTools/")
 setwd("../DL/")
 # read different exp gene data 
@@ -356,10 +357,11 @@ clinical_LUAD_m1$survial_state = survial_state
 
 #head(clinical_LUAD_m1)
 #DL statu & clinical data merge 
-DL_statu$name
+DL_statu$name = 
 clinical_LUAD_m1$clinical_LUAD.submitter_id
+DL_statu$name=rownames(DL_statu)
 clin_DL = merge(DL_statu,clinical_LUAD_m1,by.x = "name",by.y="clinical_LUAD.submitter_id")
-#head(clin_DL)
+head(clin_DL)
 #cbind(clin_DL$DL_level,clin_DL$survial_day,clin_DL$clinical_LUAD.tumor_stage)
 
 plot(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum),clin_DL$survial_day)
@@ -400,7 +402,7 @@ summary(fit)
 resP=c()
 j=1
 for (i in 4:16){
-  clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>5,1,0)
+  clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>j,1,0)
   fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
   summary(fit)
   resP[j]= fit$chisq
