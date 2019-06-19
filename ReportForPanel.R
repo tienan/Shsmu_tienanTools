@@ -61,6 +61,8 @@ DL_state = apply(tmp_file[,c(5:7,11:13)],1,mean)
 normal_state = apply(tmp_file[,c(2:4,8:10)],1,mean)
 diff_DL_nor =as.data.frame(DL_state - normal_state)
 rownames(diff_DL_nor)=tmp_file$gene_id
+nrow(diff_DL_nor)
+
 
 #1. DL increase; 0. DL decease
 
@@ -70,6 +72,7 @@ DL_sign_sort = DL_sign[order(rownames(DL_sign))]
 gene_name_exp_carcer_sort = 
   gene_name_exp_carcer[order(rownames(gene_name_exp_carcer)),]
 rownames(gene_name_exp_carcer_sort)
+nrow(gene_name_exp_carcer_sort)
 
 #?ifelse
 # DL statue simulation calculation  >75%  <25%  model 1 
@@ -189,31 +192,224 @@ ggsurvplot(fit, data = clin_DL)
 
 
 #################################################other dataset
+#The biomaRt users guide
+library("biomaRt")
 install.packages("BiocManager")
 BiocManager::install("GEOquery")
 library(GEOquery)
 gset <- getGEO("GSE42127", GSEMatrix =TRUE, AnnotGPL=TRUE )
+gset <- getGEO("GSE37745", GSEMatrix =TRUE, AnnotGPL=TRUE )
 
 
 exprSet <- exprs(gset[[1]])
 
+exprSet = as.data.frame(exprSet)
+
+############ affy_hg_u133_plus_2 2 gene Symbol
+genesybel = getBM(attributes=c("hgnc_symbol"), 
+                  filters="affy_hg_u133_plus_2",
+                  values=rownames(exprSet), 
+                  mart=ensembl)
+
+
+
+genesybel = getBM(attributes=c("hgnc_symbol","affy_hg_u133_plus_2"), 
+                  filters="hgnc_symbol",
+                  values=diff_gene_filer_1[,1], 
+                  mart=ensembl)
+
+
+###############################
+exprSet = cbind(rownames(exprSet),exprSet)
+
+colnames(exprSet)[1] = "geneID"
+
 pData <- pData(gset[[1]])
+
+cliData  = pData[,c("age at surgery:ch1","final.pat.stage:ch1","had_adjuvant_chemo:ch1","histology:ch1","overall survival months:ch1","survival status:ch1")]
 
 fdata<-fData(gset[[1]])
 
 fdata_target = fdata[fdata[,3]%in%diff_gene_filer_1[,1],c(1,3)]
 
-exprSet 
+exprSet_target = exprSet[exprSet[,1]%in%fdata_target[,1],]
+
+targetGene = merge(fdata_target,exprSet_target,by.x="ID",by.y="geneID")
+head(targetGene)
+#
+diff_DL_nor$name = rownames(diff_DL_nor)
+
+gene_up = toupper(diff_DL_nor[diff_DL_nor[,1]>0,2])
+gene_down = toupper(diff_DL_nor[diff_DL_nor[,1]<0,2])
+
+gene_name_exp_carcer = targetGene[,c(2:ncol(targetGene))]
+gene_name_exp_carcer[gene_name_exp_carcer[,1]%in%gene_down,c(2:ncol(gene_name_exp_carcer))] = -gene_name_exp_carcer[gene_name_exp_carcer[,1]%in%gene_down,c(2:ncol(gene_name_exp_carcer))]
+
+
+#targetGene[order(targetGene[,2]),2]
 
 
 
-sample <- pData$geo_accession
-group = ifelse(grepl(pattern = "non",pData[,1]),1,0)
-group <- rep(c(1,0),times=c(12,11))
-design <- model.matrix(~group)
-rownames(design)=colnames(exprSet)
+# DL statue simulation calculation  >75%  <25%  model 1 
+gene_name_exp_carcer_sign=c()
+gene_name_exp_carcer_sign = (gene_name_exp_carcer[,c(2:ncol(gene_name_exp_carcer))])
+
+for (i in 1:nrow(gene_name_exp_carcer_sign)){
+
+    gene_name_exp_carcer_sign[i,] = 
+    gene_name_exp_carcer[i,c(2:ncol(gene_name_exp_carcer))] - as.numeric(fivenum(gene_name_exp_carcer[i,c(2:ncol(gene_name_exp_carcer))])[3]) 
+    gene_name_exp_carcer_sign[i,] = ifelse(gene_name_exp_carcer_sign[i,]<0,0,1)
+
+}
+gene_name_exp_carcer_sign_sum = apply(gene_name_exp_carcer_sign,2,sum)
+table(gene_name_exp_carcer_sign_sum)
 
 
+length(gene_name_exp_carcer_sign_sum) #176
+nrow(cliData) # 176
+
+cliData=cliData[order(rownames(cliData)),]
+
+gene_name_exp_carcer_sign_sum=gene_name_exp_carcer_sign_sum[order(names(gene_name_exp_carcer_sign_sum))]
+
+cliDataGene = cbind(cliData,gene_name_exp_carcer_sign_sum)
+
+rownames(cliDataGene)
+colnames(cliDataGene) = c("age","stage","adjuvant","histology","day","condition","DL")
+
+
+cliDataGene$day=as.numeric(cliDataGene$day)
+cliDataGene$condition=ifelse(cliDataGene$condition=="A",0,1)
+cliDataGene$age= as.numeric(cliDataGene$age)
+
+plot(as.numeric(cliDataGene$DL),cliDataGene$day)
+boxplot(cliDataGene$day~as.numeric(as.numeric(cliDataGene$DL)))
+
+
+
+
+stage = as.character(cliDataGene$stage)
+stage_simple = c()
+?grepl
+for(i in 1:length(stage)){
+  if(grepl('III|IV', stage[i]))
+  {stage_simple[i]=2}
+  else
+  {stage_simple[i]=1}
+}
+
+
+
+
+rawdata = cliDataGene
+
+cliDataGene = rawdata[stage_simple==1,]
+
+cliDataGene = rawdata
+
+cliDataGene = cliDataGene[cliDataGene$histology=="Adenocarcinoma",]
+
+cliDataGene$group = ifelse(as.numeric(cliDataGene$DL)>17,1,0)
+
+
+
+
+boxplot(as.numeric(cliDataGene$day)~cliDataGene$group)
+
+
+t.test(as.numeric(cliDataGene$day)~cliDataGene$group)
+
+
+library(survival)
+library(ggplot2)
+require("survival")
+library(survminer)
+fit <- coxph(Surv(day, condition)~
+               DL,data=cliDataGene) 
+fit
+
+fit <- coxph(Surv(day, condition)~
+               DL+age,data=cliDataGene) 
+
+summary(fit)
+
+fit = survival::survdiff((day, condition)~DL,data=cliDataGene)
+fit
+
+fit = survival::survdiff(Surv(day, condition)~
+                            group,data=cliDataGene[cliDataGene$day<60,])
+fit
+
+
+fit<- survfit(Surv(day, condition)~
+                group,data=cliDataGene[cliDataGene$day<60,])
+ggsurvplot(fit, data = cliDataGene)
+
+
+require("survival")
+fit<- survfit(Surv(time, status) ~ sex, data = lung)
+
+# Basic survival curves
+ggsurvplot(fit, data = lung)
+
+
+survival::survdiff(Surv(day, condition) ~ group , data=cliDataGene)
+?
+  
+?ggsurvplot 
+ggsurvplot(fit, data = cliDataGene)
+
+
+
+
+fit <- coxph(Surv(survial_day, survial_state)~group+stage_simple,data=clin_DL) 
+summary(fit)
+
+
+
+fit <- coxph(Surv(as.numeric(`overall survival months:ch1`), `survival status:ch1`)~
+               as.numeric(gene_name_exp_carcer_sign_sum),data=cliDataGene) 
+
+fit <- coxph(Surv(as.numeric(`overall survival months:ch1`), `survival status:ch1`)~
+               as.numeric(gene_name_exp_carcer_sign_sum),data=cliDataGene) 
+summary(fit)
+
+##########################optmal cufoff value
+resP=c()
+j=1
+for (i in 4:16){
+  clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>j,1,0)
+  fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
+  summary(fit)
+  resP[j]= fit$chisq
+  j=j+1
+}
+
+fit = survival::survdiff(Surv(as.numeric(`overall survival months:ch1`), `survival status:ch1`)~
+                           group,data=cliDataGene)
+fit
+
+
+fit<- survfit(Surv(as.numeric(`overall survival months:ch1`), `survival status:ch1`)~
+                group,data=cliDataGene)
+
+summary(fit)
+
+
+?ggsurvplot
+ggsurvplot(fit, data = cliDataGene)
+
+
+
+
+
+# Fit survival curves
+#++++++++++++++++++++++++++++++++++++
+require("survival")
+fit<- survfit(Surv(time, status) ~ sex, data = lung)
+
+# Basic survival curves
+ggsurvplot(fit, data = lung)
 
 
 
