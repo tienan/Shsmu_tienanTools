@@ -22,6 +22,7 @@ library(SummarizedExperiment)
 library(TCGAbiolinks)
 library(edgeR)
 
+grepl()
 
 
 
