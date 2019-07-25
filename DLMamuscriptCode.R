@@ -117,8 +117,39 @@ GDCdownload(query.exp.hg38)
 LUADRnaseqSE <- GDCprepare(query.exp.hg38)
 
 rownames(LUADRnaseqSE) <- values(LUADRnaseqSE)$external_gene_name
-exp.hg38.values <- assay(LUADRnaseqSE)
+LUADRnaseqSEvalues <- assay(LUADRnaseqSE)
+ncol(LUADRnaseqSEvalues)
 head(exp.hg38.values)
+
+
+query.exp.hg38 <- GDCquery(project = "TCGA-THCA", 
+                           data.category = "Transcriptome Profiling", 
+                           data.type = "Gene Expression Quantification", 
+                           workflow.type = "HTSeq - FPKM")
+GDCdownload(query.exp.hg38)
+query.exp.hg38 <- GDCprepare(query.exp.hg38)
+THCARnaseqSE = assay(query.exp.hg38)
+rownames(THCARnaseqSE) <- values(query.exp.hg38 )$external_gene_name
+THCARnaseqSEValue <- assay(THCARnaseqSE)
+head(THCARnaseqSE)
+ncol(THCARnaseqSE)
+write.csv(x = THCARnaseqSE,file = "THCARnaseqV")
+
+
+query.exp.hg19 <- GDCquery(project = "TCGA-THCA", 
+                           data.category = "Gene expression", 
+                           data.type = "Gene expression quantification",
+                           legacy = TRUE)
+GDCdownload(query.exp.hg38)
+exp.hg19 <- GDCprepare(query = query.exp.hg19)
+exp.values <- assay(query.exp.hg19)
+
+
+sign = ifelse(exp.hg38.values_caner[rownames(exp.hg38.values_caner) == targetGene,]
+              >median(exp.hg38.values_caner[rownames(exp.hg38.values_caner) == targetGene,]),1,0)
+
+
+
 
 #pdia3p1 Sign#########################################################################
 
