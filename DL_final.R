@@ -229,6 +229,7 @@ LUADRnaseqSE <- GDCprepare(query.exp.hg38)
 
 rownames(LUADRnaseqSE) <- values(LUADRnaseqSE)$external_gene_name
 exp.hg38.values <- assay(LUADRnaseqSE)
+
 head(exp.hg38.values)
 #write.csv(exp.hg38.values,file = "stad_exp_hg38_FPKM.csv")
 # extract the targeted gene
@@ -241,14 +242,14 @@ patient_id = colnames(exp.hg38.values)
 for (i in 1:length(colnames(exp.hg38.values))){
   tmp = (strsplit2(as.character(patient_id[i]),split = "-"))
   sign[i] = tmp[4]
-  tmp = paste(tmp[1],tmp[2],tmp[3],sep = "_")
+  tmp = paste(tmp[1],tmp[2],tmp[3],sep = "-")
   patient_id[i] = tmp
 }
 colnames(exp.hg38.values_targeted_gene) = patient_id
 
 #gene_name_exp = exp.hg38.values[rownames(exp.hg38.values)%in%gene_name$gene_name,]
 #rownames(gene_name_exp)
-gene_name_exp_carcer = exp.hg38.values_targeted_gene[,sign == "01A"]
+gene_name_exp_carcer = exp.hg38.values_targeted_gene[,sign == "01A"] # grepl is also can use
 ##################DL condition 
 DL_state = apply(tmp_file[,c(5:7,11:13)],1,mean)
 normal_state = apply(tmp_file[,c(2:4,8:10)],1,mean)
@@ -285,7 +286,8 @@ for (i in 1:length(DL_sign_sort)){
   #  gene_name_exp_carcer_sign[,i] 
 }
 gene_name_exp_carcer_sign_sum = apply(gene_name_exp_carcer_sign,2,sum)
-table(gene_name_exp_carcer_sign_sum)
+#table(gene_name_exp_carcer_sign_sum)
+gene_name_exp_carcer_sign_sum  = rbind(gene_name_exp_carcer_sign,gene_name_exp_carcer_sign_sum )
 
 ###########################################DL heatmap
 DL_gene_exp = rbind(gene_name_exp_carcer_sort,ifelse(gene_name_exp_carcer_sign_sum>5,100,0))
@@ -323,13 +325,13 @@ pheatmap(DL_gene_exp_orderDLS[c(1,24),],
 
 ####
 
-names = names(gene_name_exp_carcer_sign_sum)
-name = c()
-for (i in 1:length(gene_name_exp_carcer_sign_sum)){
-  tmp = unlist(strsplit(names[i],split = "_"))
-  name[i]=paste(tmp[1],tmp[2],tmp[3],sep = "-")
-}
-DL_statu = as.data.frame(cbind(name,gene_name_exp_carcer_sign_sum))
+names = colnames(gene_name_exp_carcer_sign_sum)
+# name = c()
+# for (i in 1:length(gene_name_exp_carcer_sign_sum)){
+#   tmp = unlist(strsplit(names[i],split = "_"))
+#   name[i]=paste(tmp[1],tmp[2],tmp[3],sep = "-")
+# }
+DL_statu = as.data.frame(cbind(names,t(gene_name_exp_carcer_sign_sum)))
 
 clinical_LUAD <- GDCquery_clinic(project = "TCGA-LUAD", type = "clinical")
 colnames(clinical_LUAD)
@@ -357,10 +359,10 @@ clinical_LUAD_m1$survial_state = survial_state
 
 #head(clinical_LUAD_m1)
 #DL statu & clinical data merge 
-DL_statu$name = 
+DL_statu$names
 clinical_LUAD_m1$clinical_LUAD.submitter_id
-DL_statu$name=rownames(DL_statu)
-clin_DL = merge(DL_statu,clinical_LUAD_m1,by.x = "name",by.y="clinical_LUAD.submitter_id")
+# DL_statu$name=rownames(DL_statu)
+clin_DL = merge(DL_statu,clinical_LUAD_m1,by.x = "names",by.y="clinical_LUAD.submitter_id")
 head(clin_DL)
 #cbind(clin_DL$DL_level,clin_DL$survial_day,clin_DL$clinical_LUAD.tumor_stage)
 
@@ -370,12 +372,14 @@ stage = as.character(clin_DL$clinical_LUAD.tumor_stage)
 stage_simple = c()
 ?grepl
 for(i in 1:length(stage)){
-  if(grepl('iii|iv', stage[i]))
+  if(base::grepl('iii|iv', stage[i]))
   {stage_simple[i]=2}
   else
   {stage_simple[i]=1}
 }
-clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>10,1,0)
+clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>8,1,0)
+
+clin_DL$gene_name_exp_carcer_sign_sum=as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)
 
 boxplot(clin_DL$survial_day~clin_DL$group)
 
@@ -385,6 +389,60 @@ library(survival)
 library(ggplot2)
 require("survival")
 library(survminer)
+
+clin_DL_stage_1 = clin_DL[stage_simple==1,]
+clin_DL_stage_2 = clin_DL[stage_simple==2,]
+
+
+############
+#analyse the genes HR 
+############
+
+  
+
+
+head(clin_DL)
+genes = clin_DL_stage_1[,c(2:25)]
+tmpHR=c()
+tmpP=c()
+i=24
+for (i in 1:ncol(genes)){
+  fit <- summary(coxph(Surv(survial_day, survial_state)~ genes[,i],data=clin_DL_stage_1 ) )
+  tmpHR[i]=fit$coefficients[1,2]
+  tmpP[i]=fit$coefficients[1,5]
+}
+tmpHR
+tmpP
+resEval_stage_1 = cbind(colnames(genes),tmpHR,tmpP)
+
+
+head(clin_DL)
+genes = clin_DL_stage_2[,c(2:25)]
+tmpHR=c()
+tmpP=c()
+i=  
+for (i in 1:ncol(genes)){
+  fit <- summary(coxph(Surv(survial_day, survial_state)~ genes[,i],data=clin_DL_stage_2 ) )
+  tmpHR[i]=fit$coefficients[1,2]
+  tmpP[i]=fit$coefficients[1,5]
+}
+tmpHR
+tmpP
+resEval_stage_2 = cbind(colnames(genes),tmpHR,tmpP)
+
+panelName = intersect(resEval_stage_1[resEval[,2]<1,1],resEval_stage_1[resEval[,2]<1,1])
+
+tmp = as.data.frame(clin_DL[,colnames(clin_DL)%in%panelName])
+
+tmp=tmp[,-8]
+mean(base::unlist(tmp))
+apply(tmp,1,sum)
+HR_nagetive_sum = c()
+for (i in 1:nrow(tmp))
+  HR_nagetive_sum[i] = as.numeric(as.matrix(tmp)[i,]) %>% sum
+clin_DL$HR_nagetive_sum=HR_nagetive_sum
+
+
 ?survdiff
 ??survival
 nrow(clin_DL)
@@ -399,6 +457,36 @@ fit <- coxph(Surv(survial_day, survial_state)~
                as.numeric(gene_name_exp_carcer_sign_sum),data=clin_DL) 
 summary(fit)
 
+clin_DL$gene_name_exp_carcer_sign_sum = as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)
+
+fit <- coxph(Surv(survial_day, survial_state)~gene_name_exp_carcer_sign_sum,data=clin_DL) 
+
+fit <- coxph(Surv(survial_day, survial_state)~HR_nagetive_sum,data=clin_DL) 
+summary(fit)
+
+fit <- coxph(Surv(survial_day, survial_state)~gene_name_exp_carcer_sign_sum+stage_simple,data=clin_DL) 
+
+
+clin_DL_stage_1 = clin_DL[stage_simple==1,]
+
+fit <- coxph(Surv(survial_day, survial_state)~gene_name_exp_carcer_sign_sum,data=clin_DL_stage_1) 
+fit <- coxph(Surv(survial_day, survial_state)~HR_nagetive_sum,data=clin_DL_stage_1) 
+
+summary(fit)
+
+
+clin_DL_stage_2 = clin_DL[stage_simple==2,]
+fit <- coxph(Surv(survial_day, survial_state)~gene_name_exp_carcer_sign_sum,data=clin_DL_stage_2) 
+fit <- coxph(Surv(survial_day, survial_state)~HR_nagetive_sum,data=clin_DL_stage_2) 
+
+summary(fit)
+
+# 
+#                            coef exp(coef) se(coef)      z Pr(>|z|)  
+#gene_name_exp_carcer_sign_sum -0.03164   0.96886  0.01585 -1.995    0.046 *
+#
+summary(fit)
+
 resP=c()
 j=1
 for (i in 4:16){
@@ -408,18 +496,30 @@ for (i in 4:16){
   resP[j]= fit$chisq
   j=j+1
 }
+
+
+
+
+
+
+resP  # 8 is the max value 
 fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
 fit
 summary(fit)
 
+clin_DL$group = ifelse(as.numeric(clin_DL$gene_name_exp_carcer_sign_sum)>8,1,0)
+
 fit <- coxph(Surv(survial_day, survial_state)~group,data=clin_DL) 
 summary(fit)
+
 
 tiff(filename = "DL_sur.tiff",
      width = 2480, height = 1880, units = "px", pointsize = 12,
      compression = "lzw",
      bg = "white", res = 300)
-fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL)
+fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL[clin_DL$survial_day<5*365,])
+fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL[clin_DL$survial_day<3*365,])
+fit
 splots <- list()
 splots[[1]] = ggsurvplot(fit, data = clin_DL,
            font.main = c(16, "bold", "darkblue"),
@@ -429,6 +529,32 @@ splots[[1]] = ggsurvplot(fit, data = clin_DL,
 splots[[2]] <- ggsurvplot(fit, data = clin_DL, risk.table = TRUE, ggtheme = theme_grey())# Arrange multiple ggsurvplots and print the output
 arrange_ggsurvplots(splots, print = TRUE,  ncol = 2, nrow = 1, risk.table.height = 0.4)
 dev.off()
+
+fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL[clin_DL$survial_day<3*365,])
+fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL[clin_DL$survial_day<3*365,])
+fit
+splots <- list()
+splots[[1]] = ggsurvplot(fit, data = clin_DL,
+                         font.main = c(16, "bold", "darkblue"),
+                         font.x = c(20, "bold.italic", "darkred"),
+                         font.y = c(20, "bold.italic", "darkred"),
+                         font.tickslab = c(20, "plain", "Black"))
+splots[[2]] <- ggsurvplot(fit, data = clin_DL, risk.table = TRUE, ggtheme = theme_grey())# Arrange multiple ggsurvplots and print the output
+arrange_ggsurvplots(splots, print = TRUE,  ncol = 2, nrow = 1, risk.table.height = 0.4)
+
+fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL[clin_DL$survial_day<1*365,])
+fit = survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL[clin_DL$survial_day<1*365,])
+fit
+splots <- list()
+splots[[1]] = ggsurvplot(fit, data = clin_DL,
+                         font.main = c(16, "bold", "darkblue"),
+                         font.x = c(20, "bold.italic", "darkred"),
+                         font.y = c(20, "bold.italic", "darkred"),
+                         font.tickslab = c(20, "plain", "Black"))
+splots[[2]] <- ggsurvplot(fit, data = clin_DL, risk.table = TRUE, ggtheme = theme_grey())# Arrange multiple ggsurvplots and print the output
+arrange_ggsurvplots(splots, print = TRUE,  ncol = 2, nrow = 1, risk.table.height = 0.4)
+
+
 
 
 survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
@@ -450,6 +576,19 @@ ggsurvplot(fit, data = clin_DL_stage_1)
 summary(fit)
 survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL_stage_1)
 ggsurvplot(fit, data = clin_DL)
+
+
+clin_DL_stage_2 = clin_DL[stage_simple==2,]
+fit <- coxph(Surv(survial_day, survial_state)~group,data=clin_DL_stage_2) 
+summary(fit)
+fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL_stage_2)
+ggsurvplot(fit, data = clin_DL_stage_2)
+summary(fit)
+survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL_stage_2)
+ggsurvplot(fit, data = clin_DL)
+
+
+
 
 
 
