@@ -119,8 +119,8 @@ r1p=paste(table(r1),collapse = "")
 r2p=paste(table(r2),collapse = "")
 
 
-r1p = 2219
-r2p = 3236
+r1p = 3825
+
 
 
 #r1p = paste(r1,collapse = "")
@@ -129,17 +129,19 @@ r2p = 3236
 t=1
 for (i in 1:1000000){
   set.seed(i)
-  Group <-  simple_ra(N=68,num_arms = 2)
+  Group <- complete_ra(N=182,num_arms = 2,prob_each = c(.5, .5))
+  table(Group[1:63])
   table(Group)
-  rtp = paste(table(Group),collapse = "")
+  rtp = paste(table(Group[1:63]),collapse = "")
 #  print(r2p)
 #  print(rtp)
-  if (rtp==r2p){
+  if (rtp==r1p){
     t=i
     break()
   }
 }
 
+write.csv(file = "LipingRandom.csv",x = data.frame(Group_41,Group_67))
 
 
 t=1
@@ -156,7 +158,58 @@ for (i in 1:10000){
   }
 }
 
+##################20190731 lipingWang
 
+r1p1 = 3825
+
+t=1
+for (i in 1:1000000){
+  set.seed(i)
+  Group <- complete_ra(N=182,num_arms = 2,prob_each = c(.5, .5))
+  table(Group[1:63])
+  table(Group)
+  rtp = paste(table(Group[1:63]),collapse = "")
+  #  print(r2p)
+  #  print(rtp)
+  if (rtp==r1p){
+    t=i
+    break()
+  }
+}
+Group_41 = Group
+
+
+r2p = 6557
+
+r2p = 6065
+
+
+i=1
+for (i in 1:1000000){
+  set.seed(i)
+  Group <- complete_ra(N=182,num_arms = 2,prob_each = c(.5, .5))
+  table(Group[1:122])
+  table(Group)
+  rtp = paste(table(Group[1:122]),collapse = "")
+  #  print(r2p)
+  #  print(rtp)
+  if (rtp==r2p){
+    t=i
+    break()
+  }
+}
+Group_67 = Group
+
+
+write.csv(file = "LipingRandom20190731.csv",x = data.frame(Group_41,Group_67))
+
+
+
+write.csv(file = "LipingRandom.csv",x = data.frame(Group_41,Group_67))
+
+
+
+##################
 
 ####41入组的样本数
 set.seed(18)
