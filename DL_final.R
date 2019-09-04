@@ -50,12 +50,17 @@ diff_gene_fold = cbind(as.character(genes_1975_dl_con[(genes_1975_dl_con$gene)%i
 diff_gene_filer_1 = diff_gene_fold[as.numeric(diff_gene_fold[,3])*as.numeric(diff_gene_fold[,5])>0,]
 
 # gene name order
-gene_name = as.data.frame(sort(tolower(diff_gene)))
+gene_name = as.data.frame(sort((diff_gene)))
 colnames(diff_gene_filer_1 )=c("gene_name","gene_id","H1975_foldChange","p-value","A549_foldChange","p-value")
 diff_gene_filer_1_intersection = diff_gene_filer_1
+gene_name = as.data.frame(sort((diff_gene_filer_1[,1])))
+colnames(gene_name)="gene_name"
 write.csv(x = diff_gene_filer_1_intersection ,file = "diff_gene_filer_1_intersection_DL.csv")
 
 #################################################diff analysis###########################################
+library(SummarizedExperiment)
+library(TCGAbiolinks)
+library(limma)
 getwd()
 query <- GDCquery(project = "TCGA-LUAD", 
                   data.category = "Gene expression",
@@ -197,7 +202,7 @@ tmp_file=c()
 tmp_file = data.frame(1:23)
 for (i in 1:length(file_list)){
   dat_tmp = read.table(file_list[i],header = T,sep = "\t")
-  dat_tmp$gene_id=tolower(dat_tmp$gene_id)
+  dat_tmp$gene_id=dat_tmp$gene_id
   merge_tmp = merge(dat_tmp,gene_name,by.x = "gene_id",by.y  = "gene_name")
   tmp_file =cbind(tmp_file,as.data.frame(merge_tmp$FPKM))
 }
@@ -233,7 +238,7 @@ exp.hg38.values <- assay(LUADRnaseqSE)
 head(exp.hg38.values)
 #write.csv(exp.hg38.values,file = "stad_exp_hg38_FPKM.csv")
 # extract the targeted gene
-rownames(exp.hg38.values) = tolower(rownames(exp.hg38.values))
+#rownames(exp.hg38.values) = tolower(rownames(exp.hg38.values))
 # gene collection
 exp.hg38.values_targeted_gene = exp.hg38.values[rownames(exp.hg38.values)%in%gene_name$gene_name,]
 # patient_id tidy
@@ -250,6 +255,7 @@ colnames(exp.hg38.values_targeted_gene) = patient_id
 #gene_name_exp = exp.hg38.values[rownames(exp.hg38.values)%in%gene_name$gene_name,]
 #rownames(gene_name_exp)
 gene_name_exp_carcer = exp.hg38.values_targeted_gene[,sign == "01A"] # grepl is also can use
+head(gene_name_exp_carcer)
 ##################DL condition 
 DL_state = apply(tmp_file[,c(5:7,11:13)],1,mean)
 normal_state = apply(tmp_file[,c(2:4,8:10)],1,mean)
@@ -397,8 +403,9 @@ clin_DL_stage_2 = clin_DL[stage_simple==2,]
 ############
 #analyse the genes HR 
 ############
+head(clin_DL)
+fit <- summary(coxph(Surv(survial_day, survial_state)~ genes[,i],data=clin_DL_stage_1 ) )
 
-  
 
 
 head(clin_DL)
