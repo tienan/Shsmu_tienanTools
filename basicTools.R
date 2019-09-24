@@ -64,7 +64,26 @@ plot_mean_diff = function(name,point,upper,lower){
 }
 
 
+#
+fileMerge = function(){
+  getwd()
+  setwd("../pm.2.5/")
+  file_list = dir(pattern = "^[1-9]")
+  i=1
+  tmp = read.table(file_list[i],header = T,sep = "\t")
+  dat = tmp[,c(1,10)]
+  head(dat)
+  for (i in 2:length(file_list)){
+    tmp = read.table(file_list[i],header = T,sep = "\t")
+    dat =cbind(dat,tmp[,10])
+    print(nrow(tmp))  
+  }
+  
 
+  
+  colnames(dat) = c("Genes",gsub("_genes.fpkm_tracking", "", file_list[c(1:22)]))
+  write.csv(file = "non-female-smo-data.csv",x = dat)
+} 
 
 
 

@@ -2,6 +2,14 @@
 # Figure 1. Significant genetic profile by DL 
 
 
+# installing/loading the package:
+if(!require(installr))
+  { install.packages("installr")
+  require(installr)} #load / install+load installr
+install.pandoc()
+
+
+
 library("edgeR")
 library("gdata")
 library("heatmaply")
@@ -96,9 +104,18 @@ write.csv(file = "../Figures/IntersectDLGenesName.csv",x = tmp_file_dat[,1])
 #####################################################################
 
 BiocManager::install("TCGAbiolinks")
+install.packages("RSQLite")
+install.packages("mime")
+install.packages("curl")
+install.packages("TCGAbiolinks")
+install.packages("cmprsk")
 library(SummarizedExperiment)
 library(TCGAbiolinks)
 library(limma)
+install.packages("devtools")
+library("devtools")
+devtools::install_github(repo = "BioinformaticsFMRP/TCGAbiolinks")
+library("TCGAbiolinks")
 
 query.exp.hg38 <- GDCquery(project = "TCGA-LUAD", 
                            data.category = "Transcriptome Profiling", 

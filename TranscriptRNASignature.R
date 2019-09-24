@@ -4,11 +4,12 @@
 main = function(){
   ######################Setting the work direction
   getwd()
-  setwd("../Shsmu_tienanTools/")
-  setwd("../DL/")
+  setwd("..//DL/")
   ######################Reading different exp gene data 
-  genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
-  genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
+  genes_1975_dl_con = read.table("1975_gene_exp.diff",header = T,sep = "\t")
+  genes_A549_dl_con = read.table("A549_gene_exp.diff",header = T,sep = "\t")
+  diff_gene = union(genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]$gene,
+                        genes_A549_dl_con[genes_A549_dl_con$q_value<0.1,]$gene)#
   diff_gene = intersect(genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]$gene,
                         genes_A549_dl_con[genes_A549_dl_con$q_value<0.1,]$gene)# extract the foldchange of diff exp gene
   diff_gene_fold = cbind(as.character(genes_1975_dl_con[(genes_1975_dl_con$gene)%in%diff_gene,]$gene),
@@ -30,12 +31,20 @@ main = function(){
   colnames(gene_name)="gene_name"
   #Outputing file
   write.csv(x = diff_gene_filer_1_intersection ,file = "diff_gene_filer_1_intersection_DL.csv")
+  write.csv(x = diff_gene_filer_1 ,file = "diff_gene_filer_1_Union_DL.csv")
+  
   
   #####################Using the TCGA dataset
+  
+  
+  library(SummarizedExperiment)
+  library(TCGAbiolinks)
+  library(limma)
   query.exp.hg38 <- GDCquery(project = "TCGA-LUAD", 
                              data.category = "Transcriptome Profiling", 
                              data.type = "Gene Expression Quantification", 
                              workflow.type = "HTSeq - FPKM")
+  LUADRnaseqSE <- GDCdownload(query.exp.hg38)
   LUADRnaseqSE <- GDCprepare(query.exp.hg38)
   #GDCdownload(query.exp.hg38,files.per.chunk = 1)
   
@@ -70,15 +79,21 @@ main = function(){
   setwd("../DL/")
   file_list = dir(pattern = "*.fpkm*")
   
-  tmp_file = data.frame(1:nrow(gene_name))
+  tmp_file = data.frame(1:601)
   for (i in 1:length(file_list)){
     dat_tmp = read.table(file_list[i],header = T,sep = "\t")
     merge_tmp = merge(dat_tmp,gene_name,by.x = "gene_id",by.y  = "gene_name")
     tmp_file =cbind(tmp_file,as.data.frame(merge_tmp$FPKM))
   }
+<<<<<<< HEAD
   
   colnames(tmp_file) = c("geneId",gsub("_genes.fpkm_tracking", "", file_list))
   tmp_file$gene_id = merge_tmp$gene_id
+=======
+
+  colnames(tmp_file) = c("No",gsub("_genes.fpkm_tracking", "", file_list))
+  tmp_file$gene_id=merge_tmp$gene_id
+>>>>>>> e0e1fd67aba8f302f8934dd381e5c92a747d0952
   head(tmp_file)
   
   ##################DL condition 
