@@ -167,6 +167,11 @@ clinical <- TCGAbiolinks:::getGDCprojects()$project_id %>%
 ?alply
 
 clinical_LUAD <- GDCquery_clinic(project = "TCGA-LUAD", type = "clinical")
+
+clinical_THCA <- GDCquery_clinic(project = "TCGA-THCA", type = "clinical")
+head(clinical_THCA)
+write.csv(clinical_THCA,file = "clinical_THCA.csv")
+
 clinical_LUAD = clinical_LUAD[!is.na(clinical_LUAD[,2]),]
 head(clinical_LUAD)
 
