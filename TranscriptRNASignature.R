@@ -127,7 +127,5 @@ main = function(){
   gene_name_exp_carcer_sign_sum = apply(gene_name_exp_carcer_sign,2,sum)
   #table(gene_name_exp_carcer_sign_sum)
   gene_name_exp_carcer_sign_sum  = rbind(gene_name_exp_carcer_sign,gene_name_exp_carcer_sign_sum )
-  
-  
 }
 
