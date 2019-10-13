@@ -8,6 +8,10 @@ main = function(){
   ######################Reading different exp gene data 
   genes_1975_dl_con = read.table("1975_gene_exp.diff",header = T,sep = "\t")
   genes_A549_dl_con = read.table("A549_gene_exp.diff",header = T,sep = "\t")
+  
+  genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
+  genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
+  
   diff_gene = union(genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]$gene,
                         genes_A549_dl_con[genes_A549_dl_con$q_value<0.1,]$gene)#
   diff_gene = intersect(genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]$gene,
@@ -102,6 +106,14 @@ main = function(){
   names = colnames(gene_name_exp_carcer_sign_sum)
   DL_statu = as.data.frame(cbind(names,t(gene_name_exp_carcer_sign_sum)))
   
+  ##############################################
+  ##################Using the Raw data to analysis survival 
+  
+  gene_name_exp_carcer_t = as.data.frame(t(gene_name_exp_carcer))
+  gene_name_exp_carcer_t$names = colnames( gene_name_exp_carcer)
+  
+  
+  ##############################################
   ##################Clinical Data
   
   clinical_LUAD <- GDCquery_clinic(project = "TCGA-LUAD", type = "clinical")
@@ -138,7 +150,52 @@ main = function(){
   
   clin_DL = merge(DL_statu,clinical_LUAD_m1,by.x = "names",by.y="clinical_LUAD.submitter_id")
   
+  #######################Using the Raw data to analysis survival 
+
+  clin_gene = merge(gene_name_exp_carcer_t,clinical_LUAD_m1,by.x = "names",by.y="clinical_LUAD.submitter_id")
   
+  
+  ?ifelse
+  clin_gene$threeYear = ifelse(clin_gene$survial_day/365>3,0,1)
+  
+  clin_gene$fiveYear = ifelse(clin_gene$survial_day/365>5,0,1)
+  
+  colnames(clin_gene) #2:484
+  
+  t = t.test(  clin_gene[,2]~ clin_gene$threeYear )
+  table_5=c(t$p.value,t$conf.int[c(1,2)])
+  for (i in 3:484){
+    t = t.test(  clin_gene[,i]~ clin_gene$threeYear )
+    tmp = c(t$p.value,t$conf.int[c(1,2)])
+    table_5 = rbind(table_5,tmp)
+  }
+  table_5 = as.data.frame(table_5)
+  rownames(table_5) = colnames(clin_gene)[c(2:484)]
+  colnames(table_5) = c("Pvalue","conf_low","conf_up")
+  write.csv(table_5[table_5$Pvalue<0.05,],file = "DL_3YearSur.csv")
+  
+
+  t = t.test(  clin_gene[,2]~ clin_gene$fiveYear)
+  table_6=c(t$p.value,t$conf.int[c(1,2)])
+  for (i in 3:484){
+    t = t.test(  clin_gene[,i]~ clin_gene$fiveYear )
+    tmp = c(t$p.value,t$conf.int[c(1,2)])
+    table_6 = rbind(table_6,tmp)
+  }
+  table_6 = as.data.frame(table_6)
+  rownames(table_6) = colnames(clin_gene)[c(2:484)]
+  colnames(table_6) = c("Pvalue","conf_low","conf_up")
+  write.csv(table_6[table_6$Pvalue<0.05,],file = "DL_5YearSur.csv")
+  
+  
+  
+  
+  boxplot(clin_gene[,colnames(clin_gene)=="TSPAN6"]~ clin_gene$threeYear)
+  
+  
+  
+  
+  ############################################
   stage = as.character(clin_DL$clinical_LUAD.tumor_stage)
   stage_simple = c()
   for(i in 1:length(stage)){
@@ -325,6 +382,10 @@ main = function(){
     else
     {stage_simple[i]=1}
   }
+  
+  
+  
+  
   
   
   fit <- coxph(Surv(month, status)~ stage_simple ,data=clinData)

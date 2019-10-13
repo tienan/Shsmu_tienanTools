@@ -465,7 +465,7 @@ mapping <- getBM(
 )
 
 
-?enrichMKEGG
+??enrichMKEGG
 kk <- enrichKEGG(gene = mapping [,3], organism = 'mmu')
 
 keGG =  kk@result[kk@result$pvalue<0.05,]
@@ -609,19 +609,38 @@ a = venn.diagram(list(ControlDiseaseModel=A,
 
 intersectsSet = intersect(intersect(intersect(intersect(A,B),C),D),E)
 dataInsect = dat[intersectsSet,-1]
-colnames(dataInsect) = c("CELL1","CELL2","CN1","CN2","EPFD1","EPFD2","EXO1","EXO2","M1","M2","PFD1","PFD2")
+colnames(dataInsect)= c("CELL1","CELL2","CN1","CN2","EPFD1","EPFD2","EXO1","EXO2","M1","M2","PFD1","PFD2")
+rownames(dataInsect) = dat[intersectsSet,1]
 
+write.csv(file = "dataInsect",x=dataInsect)
 
 pheatmap(
-  dataInsect,
+  as.data.frame(dataInsect),
   # clustering_distance_cols = "", 
   clustering_distance_rows = "euclidean",units = "px", pointsize = 1,
   cluster_rows = T,
   cluster_cols = T,
   scale="row",
-  fontsize_row = 0.1, 
+  fontsize_row = 10, 
   fontsize_col = 15,
-  show_rownames = F,
   show_colnames = T,
+  show_rownames = T,
   angle_col = 45
 )
+
+library(biomaRt)
+
+musmart <- useMart(dataset = "mmusculus_gene_ensembl", biomart = "ensembl")
+
+
+# Object of class 'Mart':
+#   Using the ENSEMBL_MART_ENSEMBL BioMart database
+#   Using the hsapiens_gene_ensembl dataset
+mygenes <- dat[intersectsSet,1]
+mapping <- getBM(
+  attributes = c('ensembl_gene_id', 'ensembl_transcript_id', 'entrezgene_id', 'hgnc_symbol'), 
+  filters = 'ensembl_gene_id',
+  values = mygenes,
+  mart = musmart
+)
+mapping[,4]
