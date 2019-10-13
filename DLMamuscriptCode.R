@@ -560,8 +560,7 @@ plotGseaTable(pathwaysH[topPathways$pathway],
               TCGAGsea, 
               gseaParam = 0.5)
 ################## result 
-
-
+library(clusterProfiler)
 
 
 head(fgseaRes[order(padj, -abs(NES)), ], n=10)
@@ -828,6 +827,20 @@ mapping <- getBM(
   values = mygenes,
   mart = hsmart
 )
+
+ensembl = useMart("ensembl",dataset="hsapiens_gene_ensembl")
+mygenes <- c("TNF", "IL6", "IL1B", "IL10", "CRP", "TGFB1", "CXCL8")
+getBM(attributes = c("hgnc_symbol", "ensembl_gene_id", "entrezgene"), 
+      filters = "hgnc_symbol",
+      values = mygenes,
+      mart = ensembl) # 前面选好的的数据库
+
+affyids=c("202763_at","209310_s_at","207500_at")
+getBM(attributes=c('affy_hg_u133_plus_2', 'hgnc_symbol','chromosome_name','start_position','end_position', 'band'),
+      filters = 'affy_hg_u133_plus_2', values = affyids, mart = ensembl)
+
+
+
 
 library(GEOquery)
 
