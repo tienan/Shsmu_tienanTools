@@ -380,7 +380,7 @@ main = function(){
     {stage_simple[i]=1}
   }
   
-  ##############################GEO dataset
+  ##############################GEO dataset GSE31210
   install.packages("BiocManager")
   BiocManager::install("GEOquery")
   library(GEOquery)
@@ -389,7 +389,7 @@ main = function(){
   
   exprSet <- exprs(gset[[1]])
   
-  exprSet$id = rownames(exprSet)
+  #exprSet$id = rownames(exprSet)
   
   pData <- pData(gset[[1]])
   
@@ -404,30 +404,20 @@ main = function(){
   targetGeneM = targetGene[,-1]
   
   targetGeneM = (as.data.frame(t(targetGeneM)))
-  colnames(targetGeneM) = targetGene[,2]
-  targetGeneM = targetGeneM[-1,]
+  targetGeneM = as.data.frame(targetGeneM[-1,])
   targetGeneM$ID = rownames(targetGeneM) 
-  colnames(targetGeneM)
-  targetGeneM[,34]
-  
-  source("DLCalculation.R")
-  gene_name_exp_carcer_sign_sum = DLCalculation(gene_name_exp_carcer,tmp_file)
-  
-  
-  
-  
+  colnames(targetGeneM) = targetGene[,2]
+  head(targetGeneM[,c(1:10)])
+
   colnames(pData)
-  head(pData)
-  
-  
-  clinData=data.frame(c(c(1:nrow(pData))))
-  clinData$stage = pData$`final.pat.stage:ch1`
-  clinData$histology = pData$`histology:ch1`
-  clinData$month = as.numeric(pData$`overall survival months:ch1`)
-  clinData$status = pData$`survival status:ch1`
-  
-  clinData$status = ifelse(clinData$status=="A",0,1)
+  clinData=pData[,c(52,54,63)]
   clinData$ID = rownames(pData)
+  as.data.frame(clinData)
+  
+  clin_DL = merge(targetGeneM,clinData,by.x="ID",by.y="ID")
+  head(clin_DL[,c(1:10)])
+  
+  
   
   stage = as.character(clinData$stage)
   stage_simple = c()
@@ -440,6 +430,7 @@ main = function(){
   
   
   
+  group = ifelse(clinData$month> )
   
   
   

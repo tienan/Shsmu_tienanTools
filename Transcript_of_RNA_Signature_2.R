@@ -266,6 +266,65 @@ tr
 logCPM<-logCPM[is.de!=0,]
 tr[is.de!=0,]$table
 
+##############################GEO dataset GSE31210
+install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+gset <- getGEO("GSE31210", GSEMatrix =TRUE, AnnotGPL=TRUE )
+
+
+exprSet <- exprs(gset[[1]])
+
+#exprSet$id = rownames(exprSet)
+
+pData <- pData(gset[[1]])
+
+fdata<-fData(gset[[1]])
+
+fdata_target = fdata[fdata[,3]%in%diff_gene_filer_1[,1],c(1,3)]
+
+exprSet_target = as.data.frame(exprSet[rownames(exprSet)%in%fdata_target[,1],])
+exprSet_target$ID = rownames(exprSet_target)
+
+targetGene = merge(fdata_target,exprSet_target,by.x="ID",by.y="ID")
+targetGene
+targetGeneM = targetGene[,c(-1,-2)]
+
+targetGeneM = (as.data.frame(t(targetGeneM)))
+targetGeneM[c(1:10),c(1:10)]
+
+head(targetGeneM[,c(1:10)])
+colnames(targetGeneM) = targetGene[,2]
+targetGeneM$ID = rownames(targetGeneM) 
+
+colnames(pData)
+clinData=pData[,c(52,54,63)]
+clinData$ID = rownames(pData)
+as.data.frame(clinData)
+
+
+clin_DL = as.data.frame(merge(targetGeneM,clinData,by.x="ID",by.y="ID"))
+head(clin_DL[,c(1:10)])
+colnames(clin_DL)
+ncol(clin_DL)
+group = ifelse(as.numeric(clin_DL[,1037])/365>3,0,1)
+tmp = colnames(clin_DL)
+tmp[1036]
+exp = as.data.frame(t(clin_DL[,c(2:1036)]))
+exp_1 = as.data.frame((exp))
+
+exp_1  = exp[,!is.na(group) ]
+group_1 = group[!is.na(group) ]
+
+t1 = edgeR::DGEList(exp_1,group = as.factor(group_1))
+t2 = edgeR::estimateCommonDisp(t1)
+t3 = edgeR::exactTest(t2)
+logFC_table <- t3$table
+tableDEA <- edgeR::topTags(t3, n = nrow(t3$table))$table
+tableDEA <- tableDEA[tableDEA$PValue <= 0.01, ]
+tableDEA <- tableDEA[abs(tableDEA$logFC) >= 1, ]
+head(tableDEA)
+
 
 
 
