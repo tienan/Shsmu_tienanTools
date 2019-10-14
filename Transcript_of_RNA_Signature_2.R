@@ -139,6 +139,65 @@ load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
 cam<-camera(y, idx, design,contrast=H1975dlcon,inter.gene.cor=0.01)
 cam[cam$FDR<0.05,]
 ######################################################
+######################################################
+
+dat_Third = read.csv("ExpressDLThird.csv")
+head(dat_Third)
+dat_3 = dat_Third[,-1]
+rownames(dat_3) = dat_Third[,1]
+group = as.factor(gsub(pattern = "[0-9]",replacement = "",colnames(dat_3) ))
+y = DGEList(dat_3,group = group,genes = dat_3)
+library(org.Hs.eg.db)
+y$genes$Symbol<-mapIds(org.Hs.eg.db,rownames(y),keytype="ENTREZID",column="SYMBOL")
+head(y$genes)
+y<-y[!is.na(y$genes$Symbol), ]
+dim(y)
+keep<-rowSums(cpm(y) > 0.5) >= 2
+y<-y[keep, ,keep.lib.sizes=FALSE]
+pch<- c(1:24)
+colors<- rep(c("darkgreen","red","blue"),8)
+plotMDS(y,col=colors[group],pch=pch[group])
+legend("topright",legend=levels(group),pch=pch,col=colors,ncol=2)
+
+
+design<-model.matrix(~0+group)
+colnames(design)<-levels(group)
+design
+y<-estimateDisp(y, design,robust=TRUE)
+#install.packages("statmod")
+fit<-glmQLFit(y, design,robust=TRUE)
+H1975dlcon<-makeContrasts(H1975_dl-H1975_con,levels=design)
+res<-glmQLFTest(fit,contrast=dlcon)
+tmp1 = topTags(res,n = 500)
+#View(tmp1$table)
+is.de<-decideTestsDGE(res,p.value = 0.2)
+summary(is.de)
+plotMD(res,status=is.de,values=c(1,-1),col=c("red","blue"),legend="topright")
+go<-goana(res,species="Hs",FDR = 0.1)
+go[go$P.Up<0.05&go$P.Down<0.05,]
+# #Find the key words of mianyi, zhidaixie, chundaixie
+# #grepl(pattern = )
+# library(gplots)
+# logCPM.1 = logCPM[as.logical(is.de@.Data),]
+# View(is.de)
+# 
+# rownames(logCPM.1)<-logCPM.1
+# colnames(logCPM)=colnames(y$genes)[1:10]
+# logCPM<-t(scale(t(logCPM)))
+# col.pan<-colorpanel(100,"blue","white","red")
+# heatmap.2(logCPM[as.logical(is.de@.Data),],col=col.pan,Rowv=TRUE,scale="none",
+#           trace="none",dendrogram="both",cexRow=1,cexCol=1.4,density.info="none",
+#           margin=c(10,9),lhei=c(2,10),lwid=c(2,6))
+keg<-kegga(res,species="Hs")
+keg[keg$P.Up<0.1|keg$P.Down<0.1,]
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+cam<-camera(y, idx, design,contrast=H1975dlcon,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+
+
+
+
+######################################################
 
 res$table[res$table$PValue<0.05,]
 

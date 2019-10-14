@@ -380,6 +380,64 @@ main = function(){
     {stage_simple[i]=1}
   }
   
+  ##############################GEO dataset
+  install.packages("BiocManager")
+  BiocManager::install("GEOquery")
+  library(GEOquery)
+  gset <- getGEO("GSE31210", GSEMatrix =TRUE, AnnotGPL=TRUE )
+  
+  
+  exprSet <- exprs(gset[[1]])
+  
+  exprSet$id = rownames(exprSet)
+  
+  pData <- pData(gset[[1]])
+  
+  fdata<-fData(gset[[1]])
+  
+  fdata_target = fdata[fdata[,3]%in%diff_gene_filer_1[,1],c(1,3)]
+  
+  exprSet_target = as.data.frame(exprSet[rownames(exprSet)%in%fdata_target[,1],])
+  exprSet_target$ID = rownames(exprSet_target)
+  
+  targetGene = merge(fdata_target,exprSet_target,by.x="ID",by.y="ID")
+  targetGeneM = targetGene[,-1]
+  
+  targetGeneM = (as.data.frame(t(targetGeneM)))
+  colnames(targetGeneM) = targetGene[,2]
+  targetGeneM = targetGeneM[-1,]
+  targetGeneM$ID = rownames(targetGeneM) 
+  colnames(targetGeneM)
+  targetGeneM[,34]
+  
+  source("DLCalculation.R")
+  gene_name_exp_carcer_sign_sum = DLCalculation(gene_name_exp_carcer,tmp_file)
+  
+  
+  
+  
+  colnames(pData)
+  head(pData)
+  
+  
+  clinData=data.frame(c(c(1:nrow(pData))))
+  clinData$stage = pData$`final.pat.stage:ch1`
+  clinData$histology = pData$`histology:ch1`
+  clinData$month = as.numeric(pData$`overall survival months:ch1`)
+  clinData$status = pData$`survival status:ch1`
+  
+  clinData$status = ifelse(clinData$status=="A",0,1)
+  clinData$ID = rownames(pData)
+  
+  stage = as.character(clinData$stage)
+  stage_simple = c()
+  for(i in 1:length(stage)){
+    if(base::grepl('III|IV', stage[i]))
+    {stage_simple[i]=2}
+    else
+    {stage_simple[i]=1}
+  }
+  
   
   
   
