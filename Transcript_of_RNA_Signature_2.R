@@ -82,20 +82,70 @@ y$samples
 
 pch<- c(0,1,2,15)
 colors<- rep(c("blue","red"),2)
-plotMDS(y,col=colors[group],pch=pch[group])
+?plotMDS
+plotMDS(y,col=colors[group],pch=pch[group],labels=rownames(y$samples))
 legend("topright",legend=levels(group),pch=pch,col=colors,ncol=2)
 
+head(dat_1)
 
-design<-model.matrix(~0+group)
-colnames(design)<-levels(group)
+dat_2 = dat_1[,c(-3,-9)]
+head(dat_2)
+
+y = DGEList(dat_2,group = group[c(-3,-9)],genes = dat_2)
+library(org.Hs.eg.db)
+rownames(y)
+y$genes$Symbol<-mapIds(org.Hs.eg.db,rownames(y),keytype="SYMBOL",column="ENTREZID")
+head(y$genes)
+y<-y[!is.na(y$genes$Symbol), ]
+dim(y)
+rownames(y)=y$genes$Symbol
+y$genes$Symbol<-mapIds(org.Hs.eg.db,y$genes$Symbol,keytype="ENTREZID",column="SYMBOL")
+head(y$genes)
+
+
+
+
+design<-model.matrix(~0+group[c(-3,-9)])
+colnames(design)<-levels(group[c(-3,-9)])
 design
 y<-estimateDisp(y, design,robust=TRUE)
 #install.packages("statmod")
 fit<-glmQLFit(y, design,robust=TRUE)
-group
-dlcon<-makeContrasts(H1975_dl-H1975_con,levels=design)
+H1975dlcon<-makeContrasts(H1975_dl-H1975_con,levels=design)
 res<-glmQLFTest(fit,contrast=dlcon)
+tmp1 = topTags(res,n = 500)
+#View(tmp1$table)
+is.de<-decideTestsDGE(res,p.value = 0.2)
+summary(is.de)
+plotMD(res,status=is.de,values=c(1,-1),col=c("red","blue"),legend="topright")
+go<-goana(res,species="Hs",FDR = 0.1)
+go[go$P.Up<0.05&go$P.Down<0.05,]
+# #Find the key words of mianyi, zhidaixie, chundaixie
+# #grepl(pattern = )
+# library(gplots)
+# logCPM.1 = logCPM[as.logical(is.de@.Data),]
+# View(is.de)
+# 
+# rownames(logCPM.1)<-logCPM.1
+# colnames(logCPM)=colnames(y$genes)[1:10]
+# logCPM<-t(scale(t(logCPM)))
+# col.pan<-colorpanel(100,"blue","white","red")
+# heatmap.2(logCPM[as.logical(is.de@.Data),],col=col.pan,Rowv=TRUE,scale="none",
+#           trace="none",dendrogram="both",cexRow=1,cexCol=1.4,density.info="none",
+#           margin=c(10,9),lhei=c(2,10),lwid=c(2,6))
+keg<-kegga(res,species="Hs")
+keg[keg$P.Up<0.1|keg$P.Down<0.1,]
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+cam<-camera(y, idx, design,contrast=H1975dlcon,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+######################################################
+
 res$table[res$table$PValue<0.05,]
+
+tmp1 = topTags(res)
+tmp1$table
+boxplot(tmp1$table$PValue)
+fivenum(tmp1$table$PValue)
 
 tr<-glmTreat(fit,contrast=dlcon,lfc=log2(1.5))
 tr$table[tr$table$PValue<0.05,]
@@ -115,6 +165,7 @@ plotMD(res,status=is.de,values=c(1,-1),col=c("red","blue"),legend="topright")
 #
 
 go<-goana(res,species="Hs",FDR = 0.1)
+go
 summary(res)
 topTags(res)
 res$table$PValue = res$table$PValue/7
