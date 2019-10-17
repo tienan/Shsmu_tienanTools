@@ -1,4 +1,6 @@
 #YugangWang, 
+library(edgeR)
+
 getwd()
 dir()
 
@@ -24,6 +26,8 @@ tableDEA$geneName = dat[rownames(tableDEA),1]
 #Check
 plot(sign[c(4:5,10:11)],as.numeric(dat[20609,c(4:5,10:11)]))
 
+
+#
 sign_2=c()
 for (i in 1:nrow(tableDEA)){
   if ( tableDEA$logFC[i]<0){
@@ -563,3 +567,61 @@ keGG =  kk@result[kk@result$pvalue<0.05,]
 write.csv(x = keGG,file = "PFDDiseaseModel")
 
 
+
+install.packages("VennDiagram")
+library(VennDiagram)
+
+A = rownames(ControlDiseaseModel) 
+B = rownames(CellDiseaseModel)
+C = rownames(EPFDDiseaseModel) 
+D = rownames(EXODiseaseModel)
+E = rownames(PFDDiseaseModel) 
+
+venn.diagram(list(ControlDiseaseModel=A,
+                  CellDiseaseModel=B,EPFDDiseaseModel = C, 
+                  EXODiseaseModel=D,PFDDiseaseModel=E ),
+             height = 1550, width = 1700,
+             compression = "lzw",
+             resolution = 300, imagetype = "tiff", 
+             #alpha=c(0.5,0.5,0.5),
+             #fill=c("red","yellow","blue"), 
+             cat.fontface=4,fontfamily=3,
+             #main="Intersection of WD40 genes identified by different methods",
+             main.cex = 2, main.fontface = 2, main.fontfamily = 3,
+             cat.pos = c(-20, 0, -70,50,-20),
+             filename = "VennDiagram.tif")
+?venn.diagram
+
+
+a = venn.diagram(list(ControlDiseaseModel=A,
+                  CellDiseaseModel=B,EPFDDiseaseModel = C, 
+                  EXODiseaseModel=D,PFDDiseaseModel=E ),
+             height = 1550, width = 1700,
+             compression = "lzw",
+             resolution = 300, imagetype = "tiff", 
+             #alpha=c(0.5,0.5,0.5),
+             #fill=c("red","yellow","blue"), 
+             cat.fontface=4,fontfamily=3,
+             #main="Intersection of WD40 genes identified by different methods",
+             main.cex = 2, main.fontface = 2, main.fontfamily = 3,
+             cat.pos = c(-20, 0, -70,50,-20),
+             filename = "VennDiagram.tif")
+
+intersectsSet = intersect(intersect(intersect(intersect(A,B),C),D),E)
+dataInsect = dat[intersectsSet,-1]
+colnames(dataInsect) = c("CELL1","CELL2","CN1","CN2","EPFD1","EPFD2","EXO1","EXO2","M1","M2","PFD1","PFD2")
+
+
+pheatmap(
+  dataInsect,
+  # clustering_distance_cols = "", 
+  clustering_distance_rows = "euclidean",units = "px", pointsize = 1,
+  cluster_rows = T,
+  cluster_cols = T,
+  scale="row",
+  fontsize_row = 0.1, 
+  fontsize_col = 15,
+  show_rownames = F,
+  show_colnames = T,
+  angle_col = 45
+)

@@ -567,7 +567,7 @@ arrange_ggsurvplots(splots, print = TRUE,  ncol = 2, nrow = 1, risk.table.height
 survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL)
 
 ggsurvplot(fit, data = clin_DL)
-
+?ggsurvplot
 
 fit<- survfit(Surv(survial_day, survial_state)~group, data=clin_DL_stage_1)
 survival::survdiff(Surv(survial_day, survial_state)~group,data=clin_DL_stage_1)
