@@ -194,6 +194,124 @@ load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
 cam<-camera(y, idx, design,contrast=H1975dlcon,inter.gene.cor=0.01)
 cam[cam$FDR<0.05,]
 
+###################################################################PM2.5vsCon
+
+dat_Third = read.csv("ExpressDLThird.csv")
+head(dat_Third)
+dat_3 = dat_Third[,-1]
+rownames(dat_3) = dat_Third[,1]
+group = as.factor(gsub(pattern = "[0-9]",replacement = "",colnames(dat_3) ))
+y = DGEList(dat_3,group = group,genes = dat_3)
+library(org.Hs.eg.db)
+y$genes$Symbol<-mapIds(org.Hs.eg.db,rownames(y),keytype="ENTREZID",column="SYMBOL")
+head(y$genes)
+y<-y[!is.na(y$genes$Symbol), ]
+dim(y)
+keep<-rowSums(cpm(y) > 0.5) >= 2
+y<-y[keep, ,keep.lib.sizes=FALSE]
+pch<- c(1:24)
+colors<- rep(c("darkgreen","red","blue"),8)
+plotMDS(y,col=colors[group],pch=pch[group])
+legend("topright",legend=levels(group),pch=pch,col=colors,ncol=2)
+
+
+design<-model.matrix(~0+group)
+colnames(design)<-levels(group)
+design
+y<-estimateDisp(y, design,robust=TRUE)
+#install.packages("statmod")
+fit<-glmQLFit(y, design,robust=TRUE)
+H1975pmcon<-makeContrasts(HP-HB,levels=design)
+res<-glmQLFTest(fit,contrast=H1975pmcon)
+is.de<-decideTestsDGE(res)
+summary(is.de)
+tmp = topTags(res,n = 3000)
+go<-goana(res,species="Hs")
+go
+keg<-kegga(res,species="Hs")
+
+write.csv(x = tmp,file = "H1975pmcon.csv")
+write.csv(x = go,file = "H1975pmconGo.csv")
+write.csv(x = keg,file = "H1975pmconKegg.csv")
+
+
+
+A549pmcon<-makeContrasts(AP-AB,levels=design)
+res<-glmQLFTest(fit,contrast=A549pmcon)
+is.de<-decideTestsDGE(res)
+summary(is.de)
+tmp = topTags(res,n = 3000)
+go<-goana(res,species="Hs")
+go
+keg<-kegga(res,species="Hs")
+
+write.csv(x = tmp,file = "A549pmcon.csv")
+write.csv(x = go,file = "A549pmconGo.csv")
+write.csv(x = keg,file = "A549pmconKegg.csv")
+
+
+
+
+tmp = topTags(res,n = 3000)
+tmp[tmp$table$FDR<0.05,]
+#View(tmp1$table)
+is.de<-decideTestsDGE(tr)
+summary(is.de)
+plotMD(res,status=is.de,values=c(1,-1),col=c("red","blue"),legend="topright")
+tr<-glmTreat(fit,contrast=H1975pmcon)
+
+
+go<-goana(res,species="Hs")
+go
+keg<-kegga(res,species="Hs")
+keg[keg$P.Up<0.1|keg$P.Down<0.1,]
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+idx<-ids2indices(Hs.c2,id=rownames(y))
+cam<-camera(y, idx, design,contrast=H1975pmcon,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+
+cyt.go="GO:0002252"
+Rkeys(org.Mm.egGO2ALLEGS)<-cyt.go
+cyt.go.genes<-as.list(org.Hs.egGO2ALLEGS)
+cyt.go.genes_1<-as.list(org.Mm.egGO2ALLEGS[org.Mm.egGO2ALLEGS%in%])
+index<-rownames(fit) %in% ""
+
+
+barcodeplot(res$table$logFC,
+            index=idx[["SANA_TNF_SIGNALING_UP"]],
+            index2=idx[["SANA_TNF_SIGNALING_DN"]],
+            labels=c("Pm2.5","Con"),
+            main="ANA_TNF_SIGNALING",
+            alpha=1)
+            gene.weights =)
+?barcodeplot
+
+
+
+is.de<-decideTestsDGE(tr,p.value = 0.1)
+summary(is.de)
+
+#go[go$P.Up<0.05&go$P.Down<0.05,]
+# #Find the key words of mianyi, zhidaixie, chundaixie
+# #grepl(pattern = )
+# library(gplots)
+# logCPM.1 = logCPM[as.logical(is.de@.Data),]
+# View(is.de)
+# 
+# rownames(logCPM.1)<-logCPM.1
+# colnames(logCPM)=colnames(y$genes)[1:10]
+# logCPM<-t(scale(t(logCPM)))
+# col.pan<-colorpanel(100,"blue","white","red")
+# heatmap.2(logCPM[as.logical(is.de@.Data),],col=col.pan,Rowv=TRUE,scale="none",
+#           trace="none",dendrogram="both",cexRow=1,cexCol=1.4,density.info="none",
+#           margin=c(10,9),lhei=c(2,10),lwid=c(2,6))
+keg<-kegga(res,species="Hs")
+keg[keg$P.Up<0.1|keg$P.Down<0.1,]
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+cam<-camera(y, idx, design,contrast=H1975dlcon,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+
+
 
 
 
