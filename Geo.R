@@ -5,6 +5,8 @@ BiocManager::install("GEOquery")
 library(GEOquery)
 gset <- getGEO("GSE68072", GSEMatrix =TRUE, AnnotGPL=TRUE )
 exprSet <- exprs(gset[[1]])
+fdat = fData(gset[[1]])
+
 write.csv2()
 read.csv2()
 pData <- pData(gset[[1]])

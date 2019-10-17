@@ -4,10 +4,19 @@
 main = function(){
   ######################Setting the work direction
   getwd()
-  setwd("..//DL/")
+  setwd("~/DL/1975_con_dl")
   ######################Reading different exp gene data 
+<<<<<<< HEAD
+  genes_1975_dl_con = read.table("gene_exp.diff",header = T,sep = "\t")
+  genes_A549_dl_con = read.table("gene_exp.diff",header = T,sep = "\t")
+=======
   genes_1975_dl_con = read.table("1975_gene_exp.diff",header = T,sep = "\t")
   genes_A549_dl_con = read.table("A549_gene_exp.diff",header = T,sep = "\t")
+  
+  genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
+  genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
+  
+>>>>>>> 89298ccacc53ff7f539c762acd8fa26e737b7e26
   diff_gene = union(genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]$gene,
                         genes_A549_dl_con[genes_A549_dl_con$q_value<0.1,]$gene)#
   diff_gene = intersect(genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]$gene,
@@ -22,15 +31,11 @@ main = function(){
   
   #Extracting the data with the same direction 
   diff_gene_filer_1 = diff_gene_fold[as.numeric(diff_gene_fold[,3])*as.numeric(diff_gene_fold[,5])>0,]
-  
-  # gene name order
-  gene_name = as.data.frame(sort((diff_gene)))
   colnames(diff_gene_filer_1 )=c("gene_name","gene_id","H1975_foldChange","p-value","A549_foldChange","p-value")
-  diff_gene_filer_1_intersection = diff_gene_filer_1
-  gene_name = as.data.frame(sort((diff_gene_filer_1[,1])))
-  colnames(gene_name)="gene_name"
+  gene_name=diff_gene_filer_1[,1]
+  gene_name = data.frame(gene_name)
   #Outputing file
-  write.csv(x = diff_gene_filer_1_intersection ,file = "diff_gene_filer_1_intersection_DL.csv")
+  write.csv(x = diff_gene_filer_1 ,file = "diff_gene_filer_1_intersection_DL.csv")
   write.csv(x = diff_gene_filer_1 ,file = "diff_gene_filer_1_Union_DL.csv")
   
   
@@ -56,7 +61,7 @@ main = function(){
   # extract the targeted gene
   #rownames(exp.hg38.values) = tolower(rownames(exp.hg38.values))
   # gene collection
-  exp.hg38.values_targeted_gene = exp.hg38.values[rownames(exp.hg38.values)%in%gene_name$gene_name,]
+  exp.hg38.values_targeted_gene = exp.hg38.values[rownames(exp.hg38.values)%in%diff_gene_filer_1[,1],]
   # patient_id tidy
   sign =c()
   patient_id = colnames(exp.hg38.values)
@@ -76,7 +81,7 @@ main = function(){
   
   ##################Calculating the DL profile (The gene name and value)
   getwd()
-  setwd("../DL/")
+  setwd("~/DL")
   file_list = dir(pattern = "*.fpkm*")
   
   tmp_file = data.frame(1:601)
@@ -85,16 +90,11 @@ main = function(){
     merge_tmp = merge(dat_tmp,gene_name,by.x = "gene_id",by.y  = "gene_name")
     tmp_file =cbind(tmp_file,as.data.frame(merge_tmp$FPKM))
   }
-<<<<<<< HEAD
+
   
   colnames(tmp_file) = c("geneId",gsub("_genes.fpkm_tracking", "", file_list))
   tmp_file$gene_id = merge_tmp$gene_id
-=======
 
-  colnames(tmp_file) = c("No",gsub("_genes.fpkm_tracking", "", file_list))
-  tmp_file$gene_id=merge_tmp$gene_id
->>>>>>> e0e1fd67aba8f302f8934dd381e5c92a747d0952
-  head(tmp_file)
   
   ##################DL condition 
   source("DLCalculation.R")
@@ -102,6 +102,14 @@ main = function(){
   names = colnames(gene_name_exp_carcer_sign_sum)
   DL_statu = as.data.frame(cbind(names,t(gene_name_exp_carcer_sign_sum)))
   
+  ##############################################
+  ##################Using the Raw data to analysis survival 
+  
+  gene_name_exp_carcer_t = as.data.frame(t(gene_name_exp_carcer))
+  gene_name_exp_carcer_t$names = colnames( gene_name_exp_carcer)
+  
+  
+  ##############################################
   ##################Clinical Data
   
   clinical_LUAD <- GDCquery_clinic(project = "TCGA-LUAD", type = "clinical")
@@ -138,7 +146,52 @@ main = function(){
   
   clin_DL = merge(DL_statu,clinical_LUAD_m1,by.x = "names",by.y="clinical_LUAD.submitter_id")
   
+  #######################Using the Raw data to analysis survival 
+
+  clin_gene = merge(gene_name_exp_carcer_t,clinical_LUAD_m1,by.x = "names",by.y="clinical_LUAD.submitter_id")
   
+  
+  ?ifelse
+  clin_gene$threeYear = ifelse(clin_gene$survial_day/365>3,0,1)
+  
+  clin_gene$fiveYear = ifelse(clin_gene$survial_day/365>5,0,1)
+  
+  colnames(clin_gene) #2:484
+  
+  t = t.test(  clin_gene[,2]~ clin_gene$threeYear )
+  table_5=c(t$p.value,t$conf.int[c(1,2)])
+  for (i in 3:484){
+    t = t.test(  clin_gene[,i]~ clin_gene$threeYear )
+    tmp = c(t$p.value,t$conf.int[c(1,2)])
+    table_5 = rbind(table_5,tmp)
+  }
+  table_5 = as.data.frame(table_5)
+  rownames(table_5) = colnames(clin_gene)[c(2:484)]
+  colnames(table_5) = c("Pvalue","conf_low","conf_up")
+  write.csv(table_5[table_5$Pvalue<0.05,],file = "DL_3YearSur.csv")
+  
+
+  t = t.test(  clin_gene[,2]~ clin_gene$fiveYear)
+  table_6=c(t$p.value,t$conf.int[c(1,2)])
+  for (i in 3:484){
+    t = t.test(  clin_gene[,i]~ clin_gene$fiveYear )
+    tmp = c(t$p.value,t$conf.int[c(1,2)])
+    table_6 = rbind(table_6,tmp)
+  }
+  table_6 = as.data.frame(table_6)
+  rownames(table_6) = colnames(clin_gene)[c(2:484)]
+  colnames(table_6) = c("Pvalue","conf_low","conf_up")
+  write.csv(table_6[table_6$Pvalue<0.05,],file = "DL_5YearSur.csv")
+  
+  
+  
+  
+  boxplot(clin_gene[,colnames(clin_gene)=="TSPAN6"]~ clin_gene$threeYear)
+  
+  
+  
+  
+  ############################################
   stage = as.character(clin_DL$clinical_LUAD.tumor_stage)
   stage_simple = c()
   for(i in 1:length(stage)){
@@ -171,6 +224,7 @@ main = function(){
   table_1 = rbind( table_1 ,sumfit$coefficients) 
   fit <- coxph(Surv(survial_day, survial_state)~clinical_LUAD.cigarettes_per_day+clinical_LUAD.age_at_diagnosis+stage_simple,data=clin_DL)
   sumfit = summary(fit) 
+  table_0 = sumfit$coefficients
   
   
   table_2=data.frame()
@@ -325,6 +379,59 @@ main = function(){
     else
     {stage_simple[i]=1}
   }
+  
+  ##############################GEO dataset GSE31210
+  install.packages("BiocManager")
+  BiocManager::install("GEOquery")
+  library(GEOquery)
+  gset <- getGEO("GSE31210", GSEMatrix =TRUE, AnnotGPL=TRUE )
+  
+  
+  exprSet <- exprs(gset[[1]])
+  
+  #exprSet$id = rownames(exprSet)
+  
+  pData <- pData(gset[[1]])
+  
+  fdata<-fData(gset[[1]])
+  
+  fdata_target = fdata[fdata[,3]%in%diff_gene_filer_1[,1],c(1,3)]
+  
+  exprSet_target = as.data.frame(exprSet[rownames(exprSet)%in%fdata_target[,1],])
+  exprSet_target$ID = rownames(exprSet_target)
+  
+  targetGene = merge(fdata_target,exprSet_target,by.x="ID",by.y="ID")
+  targetGeneM = targetGene[,-1]
+  
+  targetGeneM = (as.data.frame(t(targetGeneM)))
+  targetGeneM = as.data.frame(targetGeneM[-1,])
+  targetGeneM$ID = rownames(targetGeneM) 
+  colnames(targetGeneM) = targetGene[,2]
+  head(targetGeneM[,c(1:10)])
+
+  colnames(pData)
+  clinData=pData[,c(52,54,63)]
+  clinData$ID = rownames(pData)
+  as.data.frame(clinData)
+  
+  clin_DL = merge(targetGeneM,clinData,by.x="ID",by.y="ID")
+  head(clin_DL[,c(1:10)])
+  
+  
+  
+  stage = as.character(clinData$stage)
+  stage_simple = c()
+  for(i in 1:length(stage)){
+    if(base::grepl('III|IV', stage[i]))
+    {stage_simple[i]=2}
+    else
+    {stage_simple[i]=1}
+  }
+  
+  
+  
+  group = ifelse(clinData$month> )
+  
   
   
   fit <- coxph(Surv(month, status)~ stage_simple ,data=clinData)
