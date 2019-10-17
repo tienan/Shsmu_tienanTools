@@ -7,97 +7,74 @@ dir()
 #setwd("C:/Users/tienan/Documents/R")
 
 dat = read.table("/media/tienan/0000678400004823/R/yugangWangdata.txt",sep = "\t",header = T)
+dat =  read.table("C:/Users/tienan/Documents/R/yugangWangdata.txt",sep = "\t",header = T)
+
 head(dat)
 
-colnames(dat) = c("seq_id",4,4,1,1,6,6,3,3,2,2,5,5)
-sign=colnames(dat)
+#colnames(dat) = c("seq_id",4,4,1,1,6,6,3,3,2,2,5,5)
+#sign=colnames(dat)
 #"seq_id" "CELL1"  "CELL2"  "CN1"    "CN2"    "EPFD1"  "EPFD2"  "EXO1"  
 #"EXO2"   "M1"     "M2"     "PFD1"   "PFD2" 
 
 library(edgeR)
 dat_1 = dat[,-1]
-rownames(dat_1) = dat[,1]
+#rownames(dat_1) = dat[,1]
 group = gsub(pattern = "[0-9]",replacement = "",colnames(dat_1))
 head(dat)
-dat$Symbol<-mapIds(org.Mm.eg.db,keys = as.character(dat[,1]),keytype="ENSEMBL",column="SYMBOL",multiVals = "first")
-
-library(dplyr)
-
-
-
-
-y = DGEList(dat_1,group = group,genes = dat_1)
-library(org.Hs.eg.db)
+install.packagens("org.Mm.eg.db")
 library(org.Mm.eg.db)
-rownames(y)
-?mapIds
-y$genes$Symbol<-mapIds(org.Mm.eg.db,rownames(y),keytype="ENSEMBL",column="SYMBOL",multiVals = "first")
-
-rownames(y) <- mapIds(org.Mm.eg.db, keys = rownames(y), keytype = "ENSEMBL", column="ENTREZID",multiVals = "first")
-
-
-
-require(hgu95av2.db)
-columns(hgu95av2.db)
-select(hgu95av2.db, keys=rownames(y), columns = c("SYMBOL","ENTREZID"))
-
-
+library(dplyr)
+dat$Symbol<-mapIds(org.Mm.eg.db,keys = as.character(dat[,1]),keytype="ENSEMBL",column="SYMBOL",multiVals = last)
+dat_1 <- dat %>% 
+  distinct(Symbol,.keep_all = T)
+rownames(dat_1)=mapIds(org.Mm.eg.db,keys = dat_1$Symbol,keytype="SYMBOL",column="ENTREZID",multiVals = "first")
+head(dat_1)
+dat_2 = dat[,c(-1,-ncol(dat_1))]
+head(dat_2)
+# ?mapId
+# 
+# dat$ENTREZID=mapIds(org.Mm.eg.db,keys = as.character(dat[,1]),keytype="ENSEMBL",column="",multiVals = "first")
+# dat_1 = dat[!is.na(dat$Symbol ),]
+# rownames(dat_1) = dat_1$Symbol
+#library(dplyr)
+#summarise(group_by(dat, seq_id),max=)
+y = DGEList(dat_2,group = group,genes = dat_2)
+#library(org.Mm.eg.db)
+#rownames(y)
+#?mapIds
+y$genes$Symbol<-mapIds(org.Mm.eg.db,keys = rownames(y),keytype="ENTREZID",column="SYMBOL",multiVals = first)
+y<-y[!is.na(y$genes$Symbol), ]
+# require(hgu95av2.db)
+# columns(hgu95av2.db)
+# select(hgu95av2.db, keys=rownames(y), columns = c("SYMBOL","ENTREZID"))
 head(y$genes)
 y<-y[!is.na(y$genes$Symbol), ]
 dim(y)
-rownames(y)=y$genes$Symbol
-y$genes$Symbol<-mapIds(org.Hs.eg.db,y$genes$Symbol,keytype="ENTREZID",column="SYMBOL")
-#BiocManager::install("org.Mm.eg.db")
-#BiocManager::install("org.Hs.eg.db")
-#library(org.Mm.eg.db)
-
-#y$genes$Symbol = mapIds(org.Hs.eg.db,rownames(y),keytype = "ENTREZID",column = "SYMBOL")
-#group=factor(name)
-#table(group)
-#y = y[!is.na(y$genes$Symbol ),]
-#dim(y)
-#keep 
+ownames(y)=y$genes$Symbol
 y=calcNormFactors(y)
 y$samples
-
-pch<- c(0,1,2,15)
-colors<- rep(c("blue","red"),2)
+pch<- c(0,1,2,3,15,16)
+colors<- rep(c("blue","red","green"),2)
 ?plotMDS
 plotMDS(y,col=colors[group],pch=pch[group],labels=rownames(y$samples))
 legend("topright",legend=levels(group),pch=pch,col=colors,ncol=2)
 
-head(dat_1)
 
-dat_2 = dat_1[,c(-3,-9)]
-head(dat_2)
-
-y = DGEList(dat_2,group = group[c(-3,-9)],genes = dat_2)
-library(org.Hs.eg.db)
-rownames(y)
-y$genes$Symbol<-mapIds(org.Hs.eg.db,rownames(y),keytype="SYMBOL",column="ENTREZID")
-head(y$genes)
-y<-y[!is.na(y$genes$Symbol), ]
-dim(y)
-rownames(y)=y$genes$Symbol
-y$genes$Symbol<-mapIds(org.Hs.eg.db,y$genes$Symbol,keytype="ENTREZID",column="SYMBOL")
-head(y$genes)
-
-
-
-
-design<-model.matrix(~0+group[c(-3,-9)])
-colnames(design)<-levels(group[c(-3,-9)])
+design<-model.matrix(~0+group)
+colnames(design)<-levels(group)
 design
 y<-estimateDisp(y, design,robust=TRUE)
-#install.packages("statmod")
+install.packages("statmod")
 fit<-glmQLFit(y, design,robust=TRUE)
+#######################
+
+
 H1975dlcon<-makeContrasts(H1975_dl-H1975_con,levels=design)
 res<-glmQLFTest(fit,contrast=dlcon)
 tmp1 = topTags(res,n = 500)
 #View(tmp1$table)
 is.de<-decideTestsDGE(res,p.value = 0.2)
 summary(is.de)
-plotMD(res,status=is.de,values=c(1,-1),col=c("red","blue"),legend="topright")
 go<-goana(res,species="Hs",FDR = 0.1)
 go[go$P.Up<0.05&go$P.Down<0.05,]
 # #Find the key words of mianyi, zhidaixie, chundaixie
