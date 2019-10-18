@@ -20,8 +20,9 @@ library(edgeR)
 dat_1 = dat[,-1]
 #rownames(dat_1) = dat[,1]
 group = gsub(pattern = "[0-9]",replacement = "",colnames(dat_1))
+group = as.factor(group[c(-1,-length(group))])
 head(dat)
-install.packagens("org.Mm.eg.db")
+#install.packagens("org.Mm.eg.db")
 library(org.Mm.eg.db)
 library(dplyr)
 dat$Symbol<-mapIds(org.Mm.eg.db,keys = as.character(dat[,1]),keytype="ENSEMBL",column="SYMBOL",multiVals = last)
@@ -29,7 +30,7 @@ dat_1 <- dat %>%
   distinct(Symbol,.keep_all = T)
 rownames(dat_1)=mapIds(org.Mm.eg.db,keys = dat_1$Symbol,keytype="SYMBOL",column="ENTREZID",multiVals = "first")
 head(dat_1)
-dat_2 = dat[,c(-1,-ncol(dat_1))]
+dat_2 = dat_1[,c(-1,-ncol(dat_1))]
 head(dat_2)
 # ?mapId
 # 
@@ -42,7 +43,7 @@ y = DGEList(dat_2,group = group,genes = dat_2)
 #library(org.Mm.eg.db)
 #rownames(y)
 #?mapIds
-y$genes$Symbol<-mapIds(org.Mm.eg.db,keys = rownames(y),keytype="ENTREZID",column="SYMBOL",multiVals = first)
+y$genes$Symbol<-mapIds(org.Mm.eg.db,keys = rownames(dat_2),keytype="ENTREZID",column="SYMBOL",multiVals = first)
 y<-y[!is.na(y$genes$Symbol), ]
 # require(hgu95av2.db)
 # columns(hgu95av2.db)
@@ -50,56 +51,129 @@ y<-y[!is.na(y$genes$Symbol), ]
 head(y$genes)
 y<-y[!is.na(y$genes$Symbol), ]
 dim(y)
-ownames(y)=y$genes$Symbol
 y=calcNormFactors(y)
 y$samples
-pch<- c(0,1,2,3,15,16)
-colors<- rep(c("blue","red","green"),2)
-?plotMDS
-plotMDS(y,col=colors[group],pch=pch[group],labels=rownames(y$samples))
-legend("topright",legend=levels(group),pch=pch,col=colors,ncol=2)
+#pch<- c(0,1,2,3,15,16)
+#colors<- rep(c("blue","red","green"),2)
+#?plotMDS
+plotMDS(y,labels=rownames(y$samples))
+y$samples
+group
+#legend("topright",legend=group,pch=pch,col=colors,ncol=2)
 
 
 design<-model.matrix(~0+group)
 colnames(design)<-levels(group)
 design
 y<-estimateDisp(y, design,robust=TRUE)
-install.packages("statmod")
+#install.packages("statmod")
 fit<-glmQLFit(y, design,robust=TRUE)
-#######################
-
-
-H1975dlcon<-makeContrasts(H1975_dl-H1975_con,levels=design)
-res<-glmQLFTest(fit,contrast=dlcon)
-tmp1 = topTags(res,n = 500)
-#View(tmp1$table)
+#######################MvsCn
+levels(group)
+MvsCn<-makeContrasts(M-CN,levels=design)
+res<-glmQLFTest(fit,contrast=MvsCn)
+nrow(res$table[abs(res$table$logFC)>1,])
+res$table[abs(res$table$logFC)>1,]$PValue=1.750675e-05
+degs = rownames(res$genes[abs(res$table$logFC)>1,])
+tmp1 = topTags(res,n = 5000)
 is.de<-decideTestsDGE(res,p.value = 0.2)
 summary(is.de)
-go<-goana(res,species="Hs",FDR = 0.1)
-go[go$P.Up<0.05&go$P.Down<0.05,]
-# #Find the key words of mianyi, zhidaixie, chundaixie
-# #grepl(pattern = )
-# library(gplots)
-# logCPM.1 = logCPM[as.logical(is.de@.Data),]
-# View(is.de)
-# 
-# rownames(logCPM.1)<-logCPM.1
-# colnames(logCPM)=colnames(y$genes)[1:10]
-# logCPM<-t(scale(t(logCPM)))
-# col.pan<-colorpanel(100,"blue","white","red")
-# heatmap.2(logCPM[as.logical(is.de@.Data),],col=col.pan,Rowv=TRUE,scale="none",
-#           trace="none",dendrogram="both",cexRow=1,cexCol=1.4,density.info="none",
-#           margin=c(10,9),lhei=c(2,10),lwid=c(2,6))
-keg<-kegga(res,species="Hs")
-keg[keg$P.Up<0.1|keg$P.Down<0.1,]
+plotMD(res, status=is.de, values=c(1,-1), col=c("red","blue"),
+       legend="topright")
+#BiocManager::install("GO.db")
+go<-goana(res,species="Mm")
+go
+
+nrow(go)
+cyt.go = go[go$P.Up<0.05|go$P.Down<0.05,]
+nrow(cyt.go)
+library(GO.db)
+rm(org.Mm.egGO2ALLEGS)
+library(org.Mm.eg.db)
+go[rownames(go)==rownames(cyt.go)[i],]
+#############
+con <-  file("MvsCnGoGeneList.txt", open = "w")
+for (i in i:nrow(cyt.go)){
+  #Rkeys(org.Mm.egGO2ALLEGS) = "GO:0032465"
+  Rkeys(org.Mm.egGO2ALLEGS) = rownames(cyt.go)[i]
+  cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+  # length(cyt.go.genes[[i]])
+  # length(unique(cyt.go.genes[[i]]))
+  tmpName = names(cyt.go.genes)
+  goGeneList = intersect(degs,cyt.go.genes[[1]])
+  goGeneListSym="NA"
+  if(length(goGeneList)>0){
+    goGeneListSym = mapIds(org.Mm.eg.db,keys =  goGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  }
+  writeLines(text = tmpName, con = con )
+  writeLines(text = goGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con )
+  rm(org.Mm.egGO2ALLEGS)
+}
+close(con)
+
+keg<-kegga(res,species="Mm")
+nrow(keg)
+keg[keg$P.Up<0.05|keg$P.Down<0.05,]
+
+
+hsa_kegg <- clusterProfiler::download_KEGG("hsa")
+
+names(hsa_kegg)
+
+head(hsa_kegg$KEGGPATHID2NAME)
+
+head(hsa_kegg$KEGGPATHID2EXTID)
+
+PATH2ID <- hsa_kegg$KEGGPATHID2EXTID
+PATH2NAME <- hsa_kegg$KEGGPATHID2NAME
+PATH_ID_NAME <- merge(PATH2ID, PATH2NAME, by="from")
+colnames(PATH_ID_NAME) <- c("KEGGID", "ENTREZID", "DESCRPTION")
+
+# write.table(PATH_ID_NAME, "HSA_KEGG.txt", sep="\t")
+
+library(biomaRt)
+
+mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+entrezgene <- PATH_ID_NAME$ENTREZID
+# This step need some time
+ensembl_gene_id<- getBM(attributes=c("ensembl_gene_id", "entrezgene"),
+                        filters = "entrezgene",
+                        values=entrezgene , mart= mart)
+
+PATH_ID_NAME <- merge(PATH_ID_NAME, ensembl_gene_id, by.x= "ENTREZID",by.y= "entrezgene")
+
+cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+tmp = as.data.frame(t(cyt.go.genes[1]))
+mapIds(org.Mm.eg.db,keys = t(as.data.frame(cyt.go.genes[1])),keytype="ENTREZID",column="SYMBOL",multiVals = first)
+
+Rkeys(org.Mm.egGO2ALLEGS)=rownames(cyt.go)
+cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+
+con <-  file("mtcars.txt", open = "w")
+writeLines(text = paste0("#column ", mtcars_list$ncols), con = con )
+writeLines(text = paste0("#row ", mtcars_list$nrows), con = con )
+write.table(x=mtcars_list$df, file = con, quote = FALSE, sep = "\t")
+
+#################
+
+keg<-kegga(res,species="Mm")
+
+
+head(keg)
 load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
 cam<-camera(y, idx, design,contrast=H1975dlcon,inter.gene.cor=0.01)
 cam[cam$FDR<0.05,]
+write.csv(x = tmp,file = "MvsCn.csv")
+write.csv(x = go,file = "MvsCnGo.csv")
+write.csv(x = keg,file = "MvsCnKegg.csv")
 
 
+BiocManager::install("clusterProfiler")
+library(clusterProfiler)
 
-
-
+kk <- enrichKEGG(gene = degs, organism = 'mmu')
 
 
 
@@ -171,7 +245,7 @@ a = pheatmap(
   show_colnames = T,
   angle_col = 45
   
-  )
+)
 dev.off()
 write.csv(file = "Figure1aData",x = cbind(ControlDiseaseModel,dat[rownames(ControlDiseaseModel),1]))
 
@@ -693,18 +767,18 @@ venn.diagram(list(ControlDiseaseModel=A,
 
 
 a = venn.diagram(list(ControlDiseaseModel=A,
-                  CellDiseaseModel=B,EPFDDiseaseModel = C, 
-                  EXODiseaseModel=D,PFDDiseaseModel=E ),
-             height = 1550, width = 1700,
-             compression = "lzw",
-             resolution = 300, imagetype = "tiff", 
-             #alpha=c(0.5,0.5,0.5),
-             #fill=c("red","yellow","blue"), 
-             cat.fontface=4,fontfamily=3,
-             #main="Intersection of WD40 genes identified by different methods",
-             main.cex = 2, main.fontface = 2, main.fontfamily = 3,
-             cat.pos = c(-20, 0, -70,50,-20),
-             filename = "VennDiagram.tif")
+                      CellDiseaseModel=B,EPFDDiseaseModel = C, 
+                      EXODiseaseModel=D,PFDDiseaseModel=E ),
+                 height = 1550, width = 1700,
+                 compression = "lzw",
+                 resolution = 300, imagetype = "tiff", 
+                 #alpha=c(0.5,0.5,0.5),
+                 #fill=c("red","yellow","blue"), 
+                 cat.fontface=4,fontfamily=3,
+                 #main="Intersection of WD40 genes identified by different methods",
+                 main.cex = 2, main.fontface = 2, main.fontfamily = 3,
+                 cat.pos = c(-20, 0, -70,50,-20),
+                 filename = "VennDiagram.tif")
 
 intersectsSet = intersect(intersect(intersect(intersect(A,B),C),D),E)
 dataInsect = dat[intersectsSet,-1]
