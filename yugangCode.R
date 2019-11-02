@@ -19,8 +19,7 @@ head(dat)
 library(edgeR)
 dat_1 = dat[,-1]
 #rownames(dat_1) = dat[,1]
-group = gsub(pattern = "[0-9]",replacement = "",colnames(dat_1))
-group = as.factor(group[c(-1,-length(group))])
+
 head(dat)
 #install.packagens("org.Mm.eg.db")
 library(org.Mm.eg.db)
@@ -30,6 +29,8 @@ dat_1 <- dat %>%
   distinct(Symbol,.keep_all = T)
 rownames(dat_1)=mapIds(org.Mm.eg.db,keys = dat_1$Symbol,keytype="SYMBOL",column="ENTREZID",multiVals = "first")
 head(dat_1)
+group = gsub(pattern = "[0-9]",replacement = "",colnames(dat_1))
+group = as.factor(group[c(-1,-length(group))])
 dat_2 = dat_1[,c(-1,-ncol(dat_1))]
 head(dat_2)
 # ?mapId
@@ -83,17 +84,15 @@ plotMD(res, status=is.de, values=c(1,-1), col=c("red","blue"),
 #BiocManager::install("GO.db")
 go<-goana(res,species="Mm")
 go
-
 nrow(go)
 cyt.go = go[go$P.Up<0.05|go$P.Down<0.05,]
 nrow(cyt.go)
 library(GO.db)
-rm(org.Mm.egGO2ALLEGS)
 library(org.Mm.eg.db)
 go[rownames(go)==rownames(cyt.go)[i],]
 #############
 con <-  file("MvsCnGoGeneList.txt", open = "w")
-for (i in i:nrow(cyt.go)){
+for (i in 1:nrow(cyt.go)){
   #Rkeys(org.Mm.egGO2ALLEGS) = "GO:0032465"
   Rkeys(org.Mm.egGO2ALLEGS) = rownames(cyt.go)[i]
   cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
@@ -112,48 +111,397 @@ for (i in i:nrow(cyt.go)){
 }
 close(con)
 
+
+
+
 keg<-kegga(res,species="Mm")
 nrow(keg)
-keg[keg$P.Up<0.05|keg$P.Down<0.05,]
+cyt.keg = keg[keg$P.Up<0.05|keg$P.Down<0.05,]
+row.names(cyt.keg)
+con <-  file("MvsCnKeggGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.keg)){
+  cyt.kegList = keggGet(row.names(cyt.keg)[i])
+  tmpName = cyt.kegList[[1]]$NAME
+  writeLines(text = tmpName, con = con )
+  if(!is.null(cyt.kegList[[1]]$GENE)){
+    kegGeneList = intersect(degs,cyt.kegList[[1]]$GENE[seq(1,length(cyt.kegList[[1]]$GENE),2)])
+  }
+  kegGeneListSym = mapIds(org.Mm.eg.db,keys =  kegGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  writeLines(text =   kegGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con ) 
+}
+close(con)
+
+#load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
+idx<-ids2indices(Mm.c2,id=rownames(y))
+cam<-camera(y, idx, design,contrast=MvsCn,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+write.csv(x = tmp1,file = "MvsCn.csv")
+write.csv(x = cyt.go,file = "MvsCnGo.csv")
+write.csv(x = keg,file = "MvsCnKegg.csv")
+write.csv(x = cam[cam$FDR<0.05,],file = "MvsCnGASE.csv")
+
+# 
+# Rkeys(org.Mm.egPATH) = "01521" 
+# as.list(org.Mm.egPATH)
+# 
+# 
+# as.list(org.Mm.egPATH2EG)
+# 
+# tmp_1 = strsplit2(x =row.names(cyt.keg),split = ":")[,2]
+# tmp_1 = gsub(pattern = "mmu",replacement = "",x = tmp_1)
+# 
+# 
+# Rkeys(org.Mm.egPATH2EG) = tmp_1
+# as.list(org.Mm.egPATH2EG)
+# 
 
 
-hsa_kegg <- clusterProfiler::download_KEGG("hsa")
 
-names(hsa_kegg)
+# BiocManager::install("pathfindR")
+# library(pathfindR)
+# suppressPackageStartupMessages(library(pathfindR))
+# RA_input_keg = data.frame(Gene.symbol=tmp1$table$Symbol,logFC = tmp1$table$logFC,adj.P.Val = tmp1$table$FDR)
+# RA_output <- run_pathfindR(RA_input_keg)
 
-head(hsa_kegg$KEGGPATHID2NAME)
 
-head(hsa_kegg$KEGGPATHID2EXTID)
 
-PATH2ID <- hsa_kegg$KEGGPATHID2EXTID
-PATH2NAME <- hsa_kegg$KEGGPATHID2NAME
-PATH_ID_NAME <- merge(PATH2ID, PATH2NAME, by="from")
-colnames(PATH_ID_NAME) <- c("KEGGID", "ENTREZID", "DESCRPTION")
+
+# 
+# library(KEGGREST)
+# 
+# mmu_kegg <- clusterProfiler::download_KEGG("mmu")
+# head(mmu_kegg$KEGGPATHID2NAME)
+# 
+# rm(org.Mm.egPATH2EG)
+# Rkeys(org.Mm.egPATH2EG) = rownames(cyt.keg)[1]
+# keggGet(rownames(cyt.keg)[1])
+# 
+
 
 # write.table(PATH_ID_NAME, "HSA_KEGG.txt", sep="\t")
 
-library(biomaRt)
+# library(biomaRt)
+# 
+# mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+# entrezgene <- PATH_ID_NAME$ENTREZID
+# # This step need some time
+# ensembl_gene_id<- getBM(attributes=c("ensembl_gene_id", "entrezgene"),
+#                         filters = "entrezgene",
+#                         values=entrezgene , mart= mart)
+# 
+# PATH_ID_NAME <- merge(PATH_ID_NAME, ensembl_gene_id, by.x= "ENTREZID",by.y= "entrezgene")
+# 
+# cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+# tmp = as.data.frame(t(cyt.go.genes[1]))
+# mapIds(org.Mm.eg.db,keys = t(as.data.frame(cyt.go.genes[1])),keytype="ENTREZID",column="SYMBOL",multiVals = first)
+# 
+# Rkeys(org.Mm.egGO2ALLEGS)=rownames(cyt.go)
+# cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+# 
+# con <-  file("mtcars.txt", open = "w")
+# writeLines(text = paste0("#column ", mtcars_list$ncols), con = con )
+# writeLines(text = paste0("#row ", mtcars_list$nrows), con = con )
+# write.table(x=mtcars_list$df, file = con, quote = FALSE, sep = "\t")
 
-mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
-entrezgene <- PATH_ID_NAME$ENTREZID
-# This step need some time
-ensembl_gene_id<- getBM(attributes=c("ensembl_gene_id", "entrezgene"),
-                        filters = "entrezgene",
-                        values=entrezgene , mart= mart)
+#######################EXOvsM
+levels(group)
+EXOvsM<-makeContrasts(EXO-M,levels=design)
+res<-glmQLFTest(fit,contrast=EXOvsM)
+tmp1 = topTags(res,n = 5000)
+nrow(res$table[abs(res$table$logFC)>1,])
+res$table[abs(res$table$logFC)>1,]$PValue=1.750675e-05
+degs = rownames(res$genes[abs(res$table$logFC)>1,])
+tmp1 = topTags(res,n = 5000)
+is.de<-decideTestsDGE(res,p.value = 0.2)
+summary(is.de)
+plotMD(res, status=is.de, values=c(1,-1), col=c("red","blue"),
+       legend="topright")
+#BiocManager::install("GO.db")
+go<-goana(res,species="Mm")
+go
+nrow(go)
+cyt.go = go[go$P.Up<0.05|go$P.Down<0.05,]
+nrow(cyt.go)
+library(GO.db)
+library(org.Mm.eg.db)
+go[rownames(go)==rownames(cyt.go)[i],]
+#############
+con <-  file("EXOvsMGoGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.go)){
+  #Rkeys(org.Mm.egGO2ALLEGS) = "GO:0032465"
+  Rkeys(org.Mm.egGO2ALLEGS) = rownames(cyt.go)[i]
+  cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+  # length(cyt.go.genes[[i]])
+  # length(unique(cyt.go.genes[[i]]))
+  tmpName = names(cyt.go.genes)
+  goGeneList = intersect(degs,cyt.go.genes[[1]])
+  goGeneListSym="NA"
+  if(length(goGeneList)>0){
+    goGeneListSym = mapIds(org.Mm.eg.db,keys =  goGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  }
+  writeLines(text = tmpName, con = con )
+  writeLines(text = goGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con )
+  rm(org.Mm.egGO2ALLEGS)
+}
+close(con)
 
-PATH_ID_NAME <- merge(PATH_ID_NAME, ensembl_gene_id, by.x= "ENTREZID",by.y= "entrezgene")
 
-cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
-tmp = as.data.frame(t(cyt.go.genes[1]))
-mapIds(org.Mm.eg.db,keys = t(as.data.frame(cyt.go.genes[1])),keytype="ENTREZID",column="SYMBOL",multiVals = first)
 
-Rkeys(org.Mm.egGO2ALLEGS)=rownames(cyt.go)
-cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
 
-con <-  file("mtcars.txt", open = "w")
-writeLines(text = paste0("#column ", mtcars_list$ncols), con = con )
-writeLines(text = paste0("#row ", mtcars_list$nrows), con = con )
-write.table(x=mtcars_list$df, file = con, quote = FALSE, sep = "\t")
+keg<-kegga(res,species="Mm")
+nrow(keg)
+cyt.keg = keg[keg$P.Up<0.05|keg$P.Down<0.05,]
+row.names(cyt.keg)
+con <-  file("EXOvsMKeggGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.keg)){
+  cyt.kegList = keggGet(row.names(cyt.keg)[i])
+  tmpName = cyt.kegList[[1]]$NAME
+  writeLines(text = tmpName, con = con )
+  if(!is.null(cyt.kegList[[1]]$GENE)){
+    kegGeneList = intersect(degs,cyt.kegList[[1]]$GENE[seq(1,length(cyt.kegList[[1]]$GENE),2)])
+  }
+  kegGeneListSym = mapIds(org.Mm.eg.db,keys =  kegGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  writeLines(text =   kegGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con ) 
+}
+close(con)
+
+#load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
+idx<-ids2indices(Mm.c2,id=rownames(y))
+cam<-camera(y, idx, design,contrast=EXOvsM,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+write.csv(x = tmp1,file = "EXOvsM.csv")
+write.csv(x = cyt.go,file = "EXOvsMGo.csv")
+write.csv(x = cyt.keg,file = "EXOvsMKegg.csv")
+write.csv(x = cam[cam$FDR<0.05,],file = "EXOvsMGASE.csv")
+
+#######################PFDvsM
+levels(group)
+PFDvsM<-makeContrasts(PFD-M,levels=design)
+res<-glmQLFTest(fit,contrast=PFDvsM)
+tmp1 = topTags(res,n = 5000)
+nrow(res$table[abs(res$table$logFC)>1,])
+res$table[abs(res$table$logFC)>1,]$PValue=1.750675e-05
+degs = rownames(res$genes[abs(res$table$logFC)>1,])
+tmp1 = topTags(res,n = 5000)
+is.de<-decideTestsDGE(res)
+summary(is.de)
+plotMD(res, status=is.de, values=c(1,-1), col=c("red","blue"),
+       legend="topright")
+#BiocManager::install("GO.db")
+go<-goana(res,species="Mm")
+go
+nrow(go)
+cyt.go = go[go$P.Up<0.05|go$P.Down<0.05,]
+nrow(cyt.go)
+library(GO.db)
+library(org.Mm.eg.db)
+go[rownames(go)==rownames(cyt.go)[i],]
+#############
+con <-  file("PFDvsMGoGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.go)){
+  #Rkeys(org.Mm.egGO2ALLEGS) = "GO:0032465"
+  Rkeys(org.Mm.egGO2ALLEGS) = rownames(cyt.go)[i]
+  cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+  # length(cyt.go.genes[[i]])
+  # length(unique(cyt.go.genes[[i]]))
+  tmpName = names(cyt.go.genes)
+  goGeneList = intersect(degs,cyt.go.genes[[1]])
+  goGeneListSym="NA"
+  if(length(goGeneList)>0){
+    goGeneListSym = mapIds(org.Mm.eg.db,keys =  goGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  }
+  writeLines(text = tmpName, con = con )
+  writeLines(text = goGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con )
+  rm(org.Mm.egGO2ALLEGS)
+}
+close(con)
+
+
+
+
+keg<-kegga(res,species="Mm")
+nrow(keg)
+cyt.keg = keg[keg$P.Up<0.05|keg$P.Down<0.05,]
+row.names(cyt.keg)
+con <-  file("PFDvsMKeggGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.keg)){
+  cyt.kegList = keggGet(row.names(cyt.keg)[i])
+  tmpName = cyt.kegList[[1]]$NAME
+  writeLines(text = tmpName, con = con )
+  if(!is.null(cyt.kegList[[1]]$GENE)){
+    kegGeneList = intersect(degs,cyt.kegList[[1]]$GENE[seq(1,length(cyt.kegList[[1]]$GENE),2)])
+  }
+  kegGeneListSym = mapIds(org.Mm.eg.db,keys =  kegGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  writeLines(text =   kegGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con ) 
+}
+close(con)
+
+#load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
+idx<-ids2indices(Mm.c2,id=rownames(y))
+cam<-camera(y, idx, design,contrast=PFDvsM,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+write.csv(x = tmp1,file = "PFDvsM.csv")
+write.csv(x = cyt.go,file = "PFDvsMGo.csv")
+write.csv(x = cyt.keg,file = "PFDvsMKegg.csv")
+write.csv(x = cam[cam$FDR<0.05,],file = "PFDvsMGASE.csv")
+
+#######################CELLvsM
+levels(group)
+CELLvsM<-makeContrasts(CELL-M,levels=design)
+res<-glmQLFTest(fit,contrast=CELLvsM)
+tmp1 = topTags(res,n = 5000)
+nrow(res$table[abs(res$table$logFC)>1,])
+res$table[abs(res$table$logFC)>1,]$PValue=1.750675e-05
+degs = rownames(res$genes[abs(res$table$logFC)>1,])
+tmp1 = topTags(res,n = 5000)
+is.de<-decideTestsDGE(res)
+summary(is.de)
+plotMD(res, status=is.de, values=c(1,-1), col=c("red","blue"),
+       legend="topright")
+#BiocManager::install("GO.db")
+go<-goana(res,species="Mm")
+go
+nrow(go)
+cyt.go = go[go$P.Up<0.05|go$P.Down<0.05,]
+nrow(cyt.go)
+library(GO.db)
+library(org.Mm.eg.db)
+go[rownames(go)==rownames(cyt.go)[i],]
+#############
+con <-  file("CELLvsMGoGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.go)){
+  #Rkeys(org.Mm.egGO2ALLEGS) = "GO:0032465"
+  Rkeys(org.Mm.egGO2ALLEGS) = rownames(cyt.go)[i]
+  cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+  # length(cyt.go.genes[[i]])
+  # length(unique(cyt.go.genes[[i]]))
+  tmpName = names(cyt.go.genes)
+  goGeneList = intersect(degs,cyt.go.genes[[1]])
+  goGeneListSym="NA"
+  if(length(goGeneList)>0){
+    goGeneListSym = mapIds(org.Mm.eg.db,keys =  goGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  }
+  writeLines(text = tmpName, con = con )
+  writeLines(text = goGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con )
+  rm(org.Mm.egGO2ALLEGS)
+}
+close(con)
+
+
+
+
+keg<-kegga(res,species="Mm")
+nrow(keg)
+cyt.keg = keg[keg$P.Up<0.05|keg$P.Down<0.05,]
+row.names(cyt.keg)
+con <-  file("CELLvsMKeggGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.keg)){
+  cyt.kegList = keggGet(row.names(cyt.keg)[i])
+  tmpName = cyt.kegList[[1]]$NAME
+  writeLines(text = tmpName, con = con )
+  if(!is.null(cyt.kegList[[1]]$GENE)){
+    kegGeneList = intersect(degs,cyt.kegList[[1]]$GENE[seq(1,length(cyt.kegList[[1]]$GENE),2)])
+  }
+  kegGeneListSym = mapIds(org.Mm.eg.db,keys =  kegGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  writeLines(text =   kegGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con ) 
+}
+close(con)
+
+#load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
+idx<-ids2indices(Mm.c2,id=rownames(y))
+cam<-camera(y, idx, design,contrast=CELLvsM,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+write.csv(x = tmp1,file = "CELLvsM.csv")
+write.csv(x = cyt.go,file = "CELLvsMGo.csv")
+write.csv(x = cyt.keg,file = "CELLvsMKegg.csv")
+write.csv(x = cam[cam$FDR<0.05,],file = "CELLvsMGASE.csv")
+
+#######################EPFDvsM
+levels(group)
+EPFDvsM<-makeContrasts(EPFD-M,levels=design)
+res<-glmQLFTest(fit,contrast=EPFDvsM)
+tmp1 = topTags(res,n = 5000)
+nrow(res$table[abs(res$table$logFC)>1,])
+res$table[abs(res$table$logFC)>1,]$PValue=1.750675e-05
+degs = rownames(res$genes[abs(res$table$logFC)>1,])
+tmp1 = topTags(res,n = 5000)
+is.de<-decideTestsDGE(res)
+summary(is.de)
+plotMD(res, status=is.de, values=c(1,-1), col=c("red","blue"),
+       legend="topright")
+#BiocManager::install("GO.db")
+go<-goana(res,species="Mm")
+go
+nrow(go)
+cyt.go = go[go$P.Up<0.05|go$P.Down<0.05,]
+nrow(cyt.go)
+library(GO.db)
+library(org.Mm.eg.db)
+go[rownames(go)==rownames(cyt.go)[i],]
+#############
+con <-  file("EPFDvsMGoGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.go)){
+  #Rkeys(org.Mm.egGO2ALLEGS) = "GO:0032465"
+  Rkeys(org.Mm.egGO2ALLEGS) = rownames(cyt.go)[i]
+  cyt.go.genes = as.list(org.Mm.egGO2ALLEGS)
+  # length(cyt.go.genes[[i]])
+  # length(unique(cyt.go.genes[[i]]))
+  tmpName = names(cyt.go.genes)
+  goGeneList = intersect(degs,cyt.go.genes[[1]])
+  goGeneListSym="NA"
+  if(length(goGeneList)>0){
+    goGeneListSym = mapIds(org.Mm.eg.db,keys =  goGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  }
+  writeLines(text = tmpName, con = con )
+  writeLines(text = goGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con )
+  rm(org.Mm.egGO2ALLEGS)
+}
+close(con)
+
+
+
+
+keg<-kegga(res,species="Mm")
+nrow(keg)
+cyt.keg = keg[keg$P.Up<0.05|keg$P.Down<0.05,]
+row.names(cyt.keg)
+con <-  file("EPFDvsMKeggGeneList.txt", open = "w")
+for (i in 1:nrow(cyt.keg)){
+  cyt.kegList = keggGet(row.names(cyt.keg)[i])
+  tmpName = cyt.kegList[[1]]$NAME
+  writeLines(text = tmpName, con = con )
+  if(!is.null(cyt.kegList[[1]]$GENE)){
+    kegGeneList = intersect(degs,cyt.kegList[[1]]$GENE[seq(1,length(cyt.kegList[[1]]$GENE),2)])
+  }
+  kegGeneListSym = mapIds(org.Mm.eg.db,keys =  kegGeneList,keytype="ENTREZID",column="SYMBOL",multiVals = first)
+  writeLines(text =   kegGeneListSym,sep = "\t", con = con )
+  writeLines(text = "",con = con ) 
+}
+close(con)
+
+#load(url("http://bioinf.wehi.edu.au/software/MSigDB/human_c2_v5p2.rdata"))
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
+idx<-ids2indices(Mm.c2,id=rownames(y))
+cam<-camera(y, idx, design,contrast=EPFDvsM,inter.gene.cor=0.01)
+cam[cam$FDR<0.05,]
+write.csv(x = tmp1,file = "EPFDvsM.csv")
+write.csv(x = cyt.go,file = "EPFDvsMGo.csv")
+write.csv(x = cyt.keg,file = "EPFDvsMKegg.csv")
+write.csv(x = cam[cam$FDR<0.05,],file = "EPFDvsMGASE.csv")
+
+
 
 #################
 
@@ -166,7 +514,7 @@ load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
 cam<-camera(y, idx, design,contrast=H1975dlcon,inter.gene.cor=0.01)
 cam[cam$FDR<0.05,]
 write.csv(x = tmp,file = "MvsCn.csv")
-write.csv(x = go,file = "MvsCnGo.csv")
+write.csv(x = cyt.go,file = "MvsCnGo.csv")
 write.csv(x = keg,file = "MvsCnKegg.csv")
 
 
