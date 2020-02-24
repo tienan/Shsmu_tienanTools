@@ -7,8 +7,8 @@ if(!require(installr))
   { install.packages("installr")
   require(installr)} #load / install+load installr
 install.pandoc()
-
-
+BiocManager::install("heatmaply")
+BiocManager::install("methylumi")
 
 library("edgeR")
 library("gdata")
@@ -23,10 +23,10 @@ library("methylumi")
 #############################################################
 getwd()
 setwd("/home/tienan/R/Shsmu_tienanTools/")
-setwd("../DL/")
+setwd("R/DL")
 # read different exp gene data 
-genes_1975_dl_con = read.table("1975_con_dl/gene_exp.diff",header = T,sep = "\t")
-genes_A549_dl_con = read.table("A549_con_dl/gene_exp.diff",header = T,sep = "\t")
+genes_1975_dl_con = read.table("1975_gene_exp.diff",header = T,sep = "\t")
+genes_A549_dl_con = read.table("A549_gene_exp.diff",header = T,sep = "\t")
 #cutoff < 0.1 to get diff exp gene data
 diff_H1975 = genes_1975_dl_con[genes_1975_dl_con$q_value<0.1,]
 diff_A549 = genes_A549_dl_con[genes_A549_dl_con$q_value<0.1,]
