@@ -56,7 +56,7 @@ hec <- within(hec,{
 
 
 #T1: 奥痰平；T2：利培酮；T3：氨磺必利；T4：阿立哌；T5：奋乃静
-#7个中心
+#7个中�?
 
 library("randomizr")
 ?seq
@@ -97,7 +97,7 @@ for (i in 1:4){
   hospital =c(rep(i,time=550/5))
   set.seed(i)
   Z <- block_ra(blocks = hospital, num_arms = 4,prob_each = c(1,1,1,1.6)/sum(c(1,1,1,1.6)))
-  #sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+  #sugroup order: 1. 奥氮�?; 2. 利培�?; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮�?
   ?block_ra
   table(Z,hospital)
   set.seed(343+i)
@@ -110,7 +110,7 @@ for (i in 1:4){
 hospital =c(rep(5,time=550/5))
 set.seed(5)
 Z <- block_ra(blocks = hospital, num_arms = 5,prob_each = c(1,1,1,1,1.6)/sum(c(1,1,1,1,1.6)))
-#sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+#sugroup order: 1. 奥氮�?; 2. 利培�?; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮�?
 ?block_ra
 set.seed(343+5)
 a3 = sample(1:10000,length(hospital))
@@ -119,7 +119,7 @@ no=paste(Header,"_","Phase2","_",a3,sep = "")
 x = cbind(no,hospital,Z)
 colnames(x)=c("No","Group","subGroup")
 tmp = rbind(tmp,x)
-#sugroup order: 奋乃静
+#sugroup order: 奋乃�?
 tail(tmp)
 
 write.table(file = "Dengtang_phase2_tableRandom_obey.txt",tmp,sep = "\t")
@@ -132,7 +132,7 @@ for (i in 1:4){
   hospital =c(rep(i,time=130/5))
   set.seed(i+10)
   Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
-  #sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 
+  #sugroup order: 1. 奥氮�?; 2. 利培�?; 3. 氨磺必利; 4. 阿立哌唑; 
   ?block_ra
   table(Z,hospital)
   set.seed(343+10+i)
@@ -145,7 +145,7 @@ for (i in 1:4){
 hospital =c(rep(5,time=130/5))
 set.seed(5)
 Z <- block_ra(blocks = hospital, num_arms = 4,prob_each = c(1,1,1,1)/sum(c(1,1,1,1)))
-#sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+#sugroup order: 1. 奥氮�?; 2. 利培�?; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮�?
 ?block_ra
 table(Z,hospital)
 seed(343+10+5)
@@ -154,7 +154,7 @@ no=paste(Header,"_","Phase2","_",a3,sep = "")
 x = cbind(no,hospital,Z)
 colnames(x)=c("No","Group","subGroup")
 tmp = rbind(tmp,x)
-#sugroup order: 奋乃静
+#sugroup order: 奋乃�?
 write.table(file = "Dengtang_phase2_tableRandom_Not_obey.txt",tmp,sep = "\t")
 
 
@@ -179,7 +179,7 @@ write.table(file = "Dengtang_phase3_tableRandom.txt",x,sep = "\t")
 
 
 #the 20190802 modify
-#sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+#sugroup order: 1. 奥氮�?; 2. 利培�?; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮�?
 set.seed(343+10+5)
 a3 = sample(1:10000,312)
 no=paste("SmartCat","_","Phase2","_",a3,sep = "")
@@ -200,7 +200,7 @@ for (i in 1:4){
   hospital =c(rep(i,time=550/5))
   set.seed(i)
   Z <- block_ra(blocks = hospital, num_arms = 4,prob_each = c(1,1,1,2)/sum(c(1,1,1,2)))
-  #sugroup order: 1. 奥氮平; 2. 利培酮; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮平
+  #sugroup order: 1. 奥氮�?; 2. 利培�?; 3. 氨磺必利; 4. 阿立哌唑; 5. 氯氮�?
   ?block_ra
   table(Z,hospital)
   set.seed(343+i)
@@ -210,7 +210,7 @@ for (i in 1:4){
   colnames(x)=c("No","Group","subGroup")
   tmp = rbind(tmp,x)
 }
-#1.奋乃静
+#1.奋乃�?
 hospital =c(rep(5,time=550/5))
 set.seed(5)
 Z <- block_ra(blocks = hospital, num_arms = 5,prob_each = c(1,1,1,1,2)/sum(c(1,1,1,1,2)))
@@ -226,4 +226,224 @@ write.csv(file = "20190801-1Dengtang_phase2_tableRandom.csv",tmp)
 
 #############################################
 
+
+
+###############20191103
+library("randomizr")
+
+tmp = data.frame()
+#1.奥氮�?
+hospital =c(rep(1,time=80))
+set.seed(1)
+Z <- block_ra(blocks = hospital, num_arms = 2,prob_each = c(1,2)/sum(c(1,2)))
+table(Z,hospital)
+#T1:氨磺必利;T2:氯氮�?
+set.seed(343+1)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#3.氨磺必利
+hospital =c(rep(3,time=80))
+set.seed(3)
+Z <- block_ra(blocks = hospital, num_arms = 2,prob_each = c(1,2)/sum(c(1,2)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氯氮�?
+set.seed(343+3)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+
+#3.利培�?
+hospital =c(rep(2,time=80))
+set.seed(2)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,2)/sum(c(1,1,2)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氨磺必利;T3:氯氮�?
+set.seed(343+2)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#4.阿立哌唑
+hospital =c(rep(4,time=80))
+set.seed(4)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,2)/sum(c(1,1,2)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氨磺必利;T3:氯氮�?
+set.seed(343+4)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#5.奋乃�?
+hospital =c(rep(5,time=80))
+set.seed(5)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,2)/sum(c(1,1,2)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氨磺必利;T3:氯氮�?
+set.seed(343+5)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+write.csv(file = "20191103-1Dengtang_phase2_tableRandom.csv",tmp)
+
+#############################################
+
+###############20191107
+library("randomizr")
+
+tmp = data.frame()
+#1.奥氮�?
+hospital =c(rep(1,time=80))
+set.seed(1)
+Z <- block_ra(blocks = hospital, num_arms = 2,prob_each = c(1,1)/sum(c(1,1)))
+table(Z,hospital)
+#T1:氨磺必利;T2:氯氮�?
+set.seed(343+1)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#3.氨磺必利
+hospital =c(rep(3,time=80))
+set.seed(3)
+Z <- block_ra(blocks = hospital, num_arms = 2,prob_each = c(1,1)/sum(c(1,1)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氯氮�?
+set.seed(343+3)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+
+#3.利培�?
+hospital =c(rep(2,time=80))
+set.seed(2)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氨磺必利;T3:氯氮�?
+set.seed(343+2)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#4.阿立哌唑
+hospital =c(rep(4,time=80))
+set.seed(4)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氨磺必利;T3:氯氮�?
+set.seed(343+4)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#5.奋乃�?
+hospital =c(rep(5,time=80))
+set.seed(5)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
+table(Z,hospital)
+#T1:奥氮�?;T2:氨磺必利;T3:氯氮�?
+set.seed(343+5)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+write.csv(file = "20191107-1Dengtang_phase2_tableRandom.csv",tmp)
+
+
+
+###############20191107
+library("randomizr")
+
+tmp = data.frame()
+#1.�µ�ƽ
+hospital =c(rep(1,time=80))
+set.seed(1)
+Z <- block_ra(blocks = hospital, num_arms = 2,prob_each = c(1,1)/sum(c(1,1)))
+table(Z,hospital)
+#T1:���Ǳ���;T2:�ȵ�ƽ
+set.seed(343+1)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#3.���Ǳ���
+hospital =c(rep(3,time=80))
+set.seed(3)
+Z <- block_ra(blocks = hospital, num_arms = 2,prob_each = c(1,1)/sum(c(1,1)))
+table(Z,hospital)
+#T1:�µ�ƽ;T2:�ȵ�ƽ
+set.seed(343+3)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+
+#3.����ͪ
+hospital =c(rep(2,time=80))
+set.seed(2)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
+table(Z,hospital)
+#T1:�µ�ƽ;T2:���Ǳ���;T3:�ȵ�ƽ
+set.seed(343+2)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+#4.��������
+hospital =c(rep(4,time=80))
+set.seed(4)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
+table(Z,hospital)
+#T1:�µ�ƽ;T2:���Ǳ���;T3:�ȵ�ƽ
+set.seed(343+4)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+#5.���˾�
+hospital =c(rep(5,time=80))
+set.seed(5)
+Z <- block_ra(blocks = hospital, num_arms = 3,prob_each = c(1,1,1)/sum(c(1,1,1)))
+table(Z,hospital)
+#T1:�µ�ƽ;T2:���Ǳ���;T3:�ȵ�ƽ
+set.seed(343+5)
+a3 = sample(1:10000,length(hospital))
+no=paste("SmartCat","_","Phase2","_",a3,sep = "")
+x = cbind(no,hospital,Z)
+colnames(x)=c("No","Group","subGroup")
+tmp = rbind(tmp,x)
+
+write.csv(file = "20191107-1Dengtang_phase2_tableRandom.csv",tmp)
 
