@@ -401,7 +401,7 @@ ggplot() + geom_line(aes(x = by_cluster_4$time, y = I, col = '预测'),data = re
   theme_classic()+
   labs(title="4类城市", y="确诊数量",x="时间")
 
-
+by_cluster_4
 
 
 
