@@ -1,44 +1,218 @@
-setwd("D:/project/PM2.5ºÍÖ¬´úÐ»")
+#setwd("D:/project/PM2.5??Ö¬??Ð»")
+#install.packages("readr")
 library(readr)
-TCTGLUNGDEMO_IN <- read_csv("D:/project/PM2.5ºÍÖ¬´úÐ»/TGTCLUNG/TCTGLUNGDEMO_IN.csv",col_names = F)
-PM2.5=read.csv("D:/project/PM2.5ºÍÖ¬´úÐ»/Ö¬´úÐ»xPM25/pm2.5_.csv")
-province=read.csv("D:/project/PM2.5ºÍÖ¬´úÐ»/Ö¬´úÐ»xPM25/province.csv")
-clinical_in=TCTGLUNGDEMO_IN[grep(pattern = "·Î°©",TCTGLUNGDEMO_IN$X3),]
+TCTGLUNGDEMO_IN <- read_csv("../pm2.5/TCTGLUNGDEMO_IN.csv",col_names = F)
+PM2.5=read.csv("../pm2.5/PM2_5")
+head(PM2.5)
+province=read.csv("../pm2.5/province.csv")
+head(province)
+clinical_in=TCTGLUNGDEMO_IN[grep(pattern = "",TCTGLUNGDEMO_IN$X3),]
 province=province[,c(1,5)]
 province$Province=gsub(" ", "", province$Province)
 table(province$Province)
 names(PM2.5)[1]="Province"
 Pro_PM=merge(province,PM2.5,by="Province")
-TCTGLUNGDEMO_Out <- read_csv("D:/project/PM2.5ºÍÖ¬´úÐ»/TGTCLUNG/TCTGLUNGDEMO_Out.csv",col_names = F)
-lipid=read.csv("D:/project/PM2.5ºÍÖ¬´úÐ»/TGTCLUNG/Demo_COPDLUNG.csv")
+head(Pro_PM)
+
+
+clinical_out=TCTGLUNGDEMO_Out[grep(pattern = "",TCTGLUNGDEMO_Out$X3),]
+
+
+TCTGLUNGDEMO_Out <- read_csv("../pm2.5/TCTGLUNGDEMO_Out.csv",col_names = F)
+
+
+tctg_in=merge(clinical_in,lipid,by.x = "X1",by.y ="REG_CODE")
+
+tctg_out=merge(clinical_out,lipid,by.x = "X1",by.y ="REG_CODE")
+
+tctg_out$X4 = as.Date(tctg_out$X4)
+
+
+
+tctg = rbind(tctg_out,tctg_in)
+nrow(tctg)
+
+
+tctg=tctg[complete.cases(tctg$RESULTS),]
+#install.packages("sqldf")
+library(sqldf)
+tctg$Age=as.numeric(round((as.Date(substring(tctg$REPORT_TIME,1,10))-as.Date(substring(tctg$X11,1,10)))/365))
+tctg=tctg[,-c(2:4,6:9,14,16,17,19)]
+names(tctg)[2]="ID"
+#install.packages("dplyr")
+library(dplyr)
+all=left_join(tctg,Pro_PM)
+head(all)
+#names(all_in)[13:30]=substr(colnames(all_in)[13:30],2,5)
+all=unique(all)
+all$Age=as.numeric(all$Age)
+all$Gender=ifelse(all$X12=="å¥³","Female","Male")
+all$RESULTS=as.numeric(all$RESULTS)
+tc=all[all$ITEM_ENAME=="TC",]
+tg=all[all$ITEM_ENAME=="TG",]
+tc=arrange(tc, X13, REPORT_TIME)
+tg=arrange(tg, X13, REPORT_TIME)
+tc_du=sqldf("select * from tc t where (select count(1) from tc where X13 = t.X13 )>1")
+head(tc_du)
+tg_du=sqldf("select * from tg t where (select count(1) from tg where X13 = t.X13 )>1")
+head(tg_du)
+
+
+tc_du$order =c(1:nrow(tc_du))
+tc_du = na.omit(tc_du)
+tc_du <- group_by(tc_du, X13)
+
+
+models <-tc_du %>% do(mod = lm( RESULTS~order+Age, data = .))
+Sign = sign(as.data.frame(summarise(models, rsq = as.data.frame(summary(mod)$coefficients)[2,1])))
+
+tc_du$sign = Sign
+
+
+tc_du_1 <- tc_du %>% 
+  summarise(median= median(RESULTS),firstValue=first(RESULTS),lastValue= last(RESULTS),
+            age=min(Age),ORG_CODE=first(X13),gender=first(Gender),PROVINCE=last(Province),Level = mean(Level))
+tc_du_1$sign = Sign
+
+table(tc_du_1$sign)
+
+boxplot(Sign~as.numeric(tc_du_1$Level))
+
+
+table(tc_du_1$sign$rsq,tc_du_1$PROVINCE)
+
+
+
+
+
+
+tg_du$order =c(1:nrow(tg_du))
+tg_du = na.omit(tg_du)
+tg_du <- group_by(tg_du, X13)
+
+
+models <-tg_du %>% do(mod = lm( RESULTS~order+Age, data = .))
+Sign = sign(as.data.frame(summarise(models, rsq = as.data.frame(summary(mod)$coefficients)[2,1])))
+
+tg_du_1 <- tg_du %>% 
+  summarise(median= median(RESULTS),firstValue=first(RESULTS),lastValue= last(RESULTS),
+            age=min(Age),ORG_CODE=first(X13),gender=first(Gender),PROVINCE=last(Province),Level = mean(Level))
+tg_du_1$sign = Sign
+
+table(tg_du_1$sign)
+
+boxplot(Sign~as.numeric(tc_du_1$Level))
+
+
+table(tg_du_1$sign$rsq,tg_du_1$PROVINCE)
+
+
+table(tg_du_1$sign$rsq,tg_du_1$Level)
+
+
+
+
+
+TCTGLUNGDEMO_IN$X4 = as.Date(TCTGLUNGDEMO_IN$X4)
+TCTGLUNGDEMO_Out
+
+TCTGLUNGDEMO = rbind(TCTGLUNGDEMO_Out, TCTGLUNGDEMO_IN)
+nrow(TCTGLUNGDEMO )
+clinical_in=TCTGLUNGDEMO[grep(pattern = "",TCTGLUNGDEMO_IN$X3),]
+tctg=merge(clinical_in,lipid,by.x = "X1",by.y ="REG_CODE")
+nrow(tctg)
+
+tctg$Age=as.numeric(round((as.Date(substring(tctg$REPORT_TIME,1,10))-as.Date(substring(tctg$X11,1,10)))/365))
+tctg=tctg[,-c(2:4,6:9,14,16,17,19)]
+
+
+names(tctg)[2]="ID"
+
+all=left_join(tctg,Pro_PM)
+head(all)
+
+
+all=unique(all)
+all$Age=as.numeric(all$Age)
+all$Gender=ifelse(all$X12=="å¥³","Female","Male")
+all$RESULTS=as.numeric(all$RESULTS)
+tc=all[all$ITEM_ENAME=="TC",]
+tg=all[all$ITEM_ENAME=="TG",]
+tc=arrange(tc, X13, REPORT_TIME)
+tg=arrange(tg, X13, REPORT_TIME)
+tc_du=sqldf("select * from tc t where (select count(1) from tc where X13 = t.X13 )>1")
+head(tc_du)
+nrow(tc_du)
+tg_du=sqldf("select * from tg t where (select count(1) from tg where X13 = t.X13 )>1")
+head(tg_du)
+nrow(tg_du)
+
+1
+
+basicData <- by_master_index %>% 
+  summarise(median= median(RESULTS),firstValue=first(RESULTS),lastValue= last(RESULTS),
+            age=min(age),ORG_CODE=first(ORG_CODE),gender=first(sex),PROVINCE=last(PROVINCE))
+res = basicData
+
+
+clinical_in=TCTGLUNGDEMO[grep(pattern = "",TCTGLUNGDEMO_IN$X3),]
+
+
+
+
+lipid=read.csv("../pm2.5/Demo_COPDLUNG.csv")
+head(lipid)
+#install.packages("tidyr")
 library(tidyr)
 tctg_in=merge(clinical_in,lipid,by.x = "X1",by.y ="REG_CODE")
+nrow(tctg_in)
 tctg_in=tctg_in[complete.cases(tctg_in$RESULTS),]
+#install.packages("sqldf")
 library(sqldf)
 tctg_in$Age=as.numeric(round((as.Date(substring(tctg_in$REPORT_TIME,1,10))-as.Date(substring(tctg_in$X11,1,10)))/365))
 tctg_in=tctg_in[,-c(2:4,6:9,14,16,17,19)]
 names(tctg_in)[2]="ID"
+#install.packages("dplyr")
 library(dplyr)
 all_in=left_join(tctg_in,Pro_PM)
-names(all_in)[13:30]=substr(colnames(all_in)[13:30],2,5)
+head(all_in)
+#names(all_in)[13:30]=substr(colnames(all_in)[13:30],2,5)
 all_in=unique(all_in)
 all_in$Age=as.numeric(all_in$Age)
-all_in$Gender=ifelse(all_in$X12=="Å®","Female","Male")
+all_in$Gender=ifelse(all_in$X12=="å¥³","Female","Male")
 all_in$RESULTS=as.numeric(all_in$RESULTS)
 tc_in=all_in[all_in$ITEM_ENAME=="TC",]
 tg_in=all_in[all_in$ITEM_ENAME=="TG",]
 tc_in=arrange(tc_in, X13, REPORT_TIME)
 tg_in=arrange(tg_in, X13, REPORT_TIME)
 tc_in_du=sqldf("select * from tc_in t where (select count(1) from tc_in where X13 = t.X13 )>1")
+head(tc_in_du)
 tg_in_du=sqldf("select * from tg_in t where (select count(1) from tg_in where X13 = t.X13 )>1")
+head(tg_in_du)
+
+
+
+basicData <- by_master_index %>% 
+  summarise(median= median(RESULTS),firstValue=first(RESULTS),lastValue= last(RESULTS),
+            age=min(age),ORG_CODE=first(ORG_CODE),gender=first(sex),PROVINCE=last(PROVINCE))
+res = basicData
+
+
+
+
+
+
+
+
+
 tc_in_un=tc_in[!duplicated(tc_in$X13),]
 tg_in_un=tg_in[!duplicated(tg_in$X13),]
-tc_in_un$group=ifelse(tc_in_un$¾ùÖµ>quantile(tc_in_un$¾ùÖµ,.75),"Q4",
-                   ifelse(tc_in_un$¾ùÖµ>quantile(tc_in_un$¾ùÖµ,.5),"Q3",
-                          ifelse(tc_in_un$¾ùÖµ>quantile(tc_in_un$¾ùÖµ,.25),"Q2","Q1")))
-tg_in_un$group=ifelse(tg_in_un$¾ùÖµ>quantile(tg_in_un$¾ùÖµ,.75),"Q4",
-                      ifelse(tg_in_un$¾ùÖµ>quantile(tg_in_un$¾ùÖµ,.5),"Q3",
-                             ifelse(tg_in_un$¾ùÖµ>quantile(tg_in_un$¾ùÖµ,.25),"Q2","Q1")))
+tc_in_un$group=ifelse(tc_in_un$??Öµ>quantile(tc_in_un$??Öµ,.75),"Q4",
+                   ifelse(tc_in_un$??Öµ>quantile(tc_in_un$??Öµ,.5),"Q3",
+                          ifelse(tc_in_un$??Öµ>quantile(tc_in_un$??Öµ,.25),"Q2","Q1")))
+tg_in_un$group=ifelse(tg_in_un$??Öµ>quantile(tg_in_un$??Öµ,.75),"Q4",
+                      ifelse(tg_in_un$??Öµ>quantile(tg_in_un$??Öµ,.5),"Q3",
+                             ifelse(tg_in_un$??Öµ>quantile(tg_in_un$??Öµ,.25),"Q2","Q1")))
 aggregate(tg_in_un[,c(9,38)], by=list(tg_in_un$group), FUN=mean)
 library(lattice)
 library(MASS)
@@ -60,7 +234,7 @@ summary(model)
 
 ######################
 ggplot(data  = tc_in_un,
-       aes(x = ¾ùÖµ,
+       aes(x = ??Öµ,
            y = RESULTS))+
   geom_point(size     = 1.2,
              alpha    = .8,
@@ -89,17 +263,17 @@ ggplot(data  = tg_in_un,
   labs(title    = "PM2.5 vs. TG",
        subtitle = "add regression line")
 
-plot(tg_in_un$¾ùÖµ,tg_in_un$RESULTS)
+plot(tg_in_un$??Öµ,tg_in_un$RESULTS)
 library(mgcv) 
-summary(lm(tg_in_un$RESULTS~tg_in_un$¾ùÖµ))
+summary(lm(tg_in_un$RESULTS~tg_in_un$??Öµ))
 
 
-write.csv(tc_in_du,"D:/project/PM2.5ºÍÖ¬´úÐ»/result/tc_in_du.csv")
-write.csv(tg_in_du,"D:/project/PM2.5ºÍÖ¬´úÐ»/result/tg_in_du.csv")
-tc_in_du=read.csv("D:/project/PM2.5ºÍÖ¬´úÐ»/result/tc_in_du.csv")
+write.csv(tc_in_du,"D:/project/PM2.5??Ö¬??Ð»/result/tc_in_du.csv")
+write.csv(tg_in_du,"D:/project/PM2.5??Ö¬??Ð»/result/tg_in_du.csv")
+tc_in_du=read.csv("D:/project/PM2.5??Ö¬??Ð»/result/tc_in_du.csv")
 tc_in_du$Day=as.numeric(tc_in_du$Day)
 library(nlme)
-m1.nlme = lme(RESULTS ~ ¾ùÖµ,random=~1|X13,data = tc_in_du)
+m1.nlme = lme(RESULTS ~ ??Öµ,random=~1|X13,data = tc_in_du)
 anova(m1.nlme)
 library(dplyr)
 tc_in_du$X13=as.factor(tc_in_du$X13)
