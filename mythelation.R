@@ -18,7 +18,8 @@ devtools::install_github("andigoni/meinter")
 getwd()
 #Venn
 
-S_1 <- read.table("../R/RadiationMythylation/S-1.bed")
+setwd("F:/R/Shsmu_tienanTools")
+S_1 <- read.table("../radiationMythelation//S-1.bed")
 S_1$region = paste(S_1$V2,S_1$V3,sep = "_")
 head(S_1)
 summary(S_1$V5)

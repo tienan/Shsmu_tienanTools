@@ -57,6 +57,8 @@ head(tc_du)
 tg_du=sqldf("select * from tg t where (select count(1) from tg where X13 = t.X13 )>1")
 head(tg_du)
 
+sum()
+
 
 tc_du$order =c(1:nrow(tc_du))
 tc_du = na.omit(tc_du)
@@ -66,25 +68,49 @@ tc_du <- group_by(tc_du, X13)
 models <-tc_du %>% do(mod = lm( RESULTS~order+Age, data = .))
 Sign = sign(as.data.frame(summarise(models, rsq = as.data.frame(summary(mod)$coefficients)[2,1])))
 
-tc_du$sign = Sign
 
 
 tc_du_1 <- tc_du %>% 
   summarise(median= median(RESULTS),firstValue=first(RESULTS),lastValue= last(RESULTS),
-            age=min(Age),ORG_CODE=first(X13),gender=first(Gender),PROVINCE=last(Province),Level = mean(Level))
+            age=min(Age),ORG_CODE=first(X13),gender=first(Gender),PROVINCE=last(Province),Level = mean(Level),
+            time=first(REPORT_TIME),last=last(REPORT_TIME)) 
+
+tc_du_1$followTime = as.numeric((as.Date(tc_du_1$last)-as.Date(tc_du_1$time))/365)
+
 tc_du_1$sign = Sign
 
 table(tc_du_1$sign)
 
-boxplot(Sign~as.numeric(tc_du_1$Level))
+#boxplot(Sign~as.numeric(tc_du_1$Level))
+
+tc_du_1 = tc_du_1[tc_du_1$followTime>1,]
+
+groupPM = table(tc_du_1$sign$rsq,tc_du_1$Level)
 
 
-table(tc_du_1$sign$rsq,tc_du_1$PROVINCE)
+groupPM = as.data.frame(cbind(groupPM[-2,1],groupPM[-2,2]))
+chisq.test(groupPM[,c(1,2)],correct = F)
+colnames(groupPM)=c("Low Exposure","High Exposure")
+rownames(groupPM)=c("Not elevation","Elevation")
+
+for(i in 1:2){
+  groupPM[,i] = groupPM[,i]/sum(groupPM[,i])
+}
+
+groupPM = as.data.frame(t(groupPM))
+
+groupPM$Group=c("Low Exposure","High Exposure")
+
+
+
+barplot(cbind(`Not elevation`,`Elevation`) ~ Group, data = groupPM[c(1:2),],
+        col = c("green","red"),
+        legend = colnames(groupPM)[c(1,2)], ylim = c(0, 1.5))
 
 
 
 
-
+?barplot
 
 tg_du$order =c(1:nrow(tg_du))
 tg_du = na.omit(tg_du)
@@ -108,6 +134,66 @@ table(tg_du_1$sign$rsq,tg_du_1$PROVINCE)
 
 
 table(tg_du_1$sign$rsq,tg_du_1$Level)
+
+groupPM = table(tg_du_1$sign$rsq,tg_du_1$Level)
+
+groupPM[3,] = groupPM[2,]+groupPM[3,]
+
+
+groupPM = as.data.frame(cbind(groupPM[-2,1],groupPM[-2,2],groupPM[-2,3],groupPM[-2,4],groupPM[-2,5],groupPM[-2,6],
+                              groupPM[-2,7]))
+
+groupPM
+
+#chisq.test(groupPM[sum(groupPM),correct = F)
+
+
+plot(c(1:6),groupPM$Elevation[c(1:6)],ylim =c(.4,.6))
+
+#chisq.test(groupPM[,c(1,2)],correct = F)
+colnames(groupPM)=c("Exposure 1","Exposure 2","Exposure 3","Exposure 4","Exposure 5","Exposure 6","Exposure 7")
+rownames(groupPM)=c("Not elevation","Elevation")
+
+for(i in 1:7){
+  groupPM[,i] = groupPM[,i]/sum(groupPM[,i])
+}
+
+groupPM = as.data.frame(t(groupPM))
+
+groupPM$Group=c("Exposure 1","Exposure 2","Exposure 3","Exposure 4","Exposure 5","Exposure 6","Exposure 7")
+
+
+
+barplot(cbind(`Not elevation`,`Elevation`) ~ Group,
+        data = groupPM[c(1:6),],
+        col = c("green","red"),
+        legend = colnames(groupPM)[c(1,2)], ylim = c(0, 1.5))
+
+barplot(cbind(`Not elevation`,`Elevation`) ~ Group,
+        data = groupPM[c(3:6),],
+        col = c("green","red"),
+        legend = colnames(groupPM)[c(1,2)], ylim = c(0, 1.5))
+
+plot(c(1:6),groupPM$Elevation[c(1:6)],type = "l")
+
+
+
+
+summary(lm(groupPM$Elevation[c(3:6)]~c(3:6)))
+
+
+
+sum(groupPM)
+
+sum(groupPM[,c(3:6)])
+
+
+nrow(tg_du_1)+nrow(tc_du_1)
+
+
+#(`Exposure 1`,`Exposure 2`,`Exposure 3`,`Exposure 4`,`Exposure 5`,`Exposure 6`,`Exposure 7`)
+
+
 
 
 
